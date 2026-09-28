@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Canvas } from '@/canvas/Canvas'
 import { initPersistence } from '@/persistence/persist'
 import { useCanvasStore } from '@/store/canvasStore'
+import { ConfirmDialog } from '@/ui/ConfirmDialog'
 import { DevPanel } from '@/ui/DevPanel'
 import { SaveIndicator } from '@/ui/SaveIndicator'
 import { Toaster } from '@/ui/Toaster'
@@ -29,6 +30,7 @@ export default function App() {
         <div className="grid h-full place-items-center text-sm text-muted-foreground">加载画布…</div>
       )}
       <Toaster />
+      <ConfirmDialog />
     </div>
   )
 }

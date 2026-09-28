@@ -3,6 +3,8 @@ import { useEffect, type RefObject } from 'react'
 import { useCanvasStore } from '@/store/canvasStore'
 import { persistence } from '@/persistence/persist'
 import { zoomAt } from './coords'
+import { summarizeNodeRemoval } from '@/domain'
+import { confirm, isConfirmOpen } from '@/ui/confirm'
 
 const ZOOM_SPEED = 0.01
 // Mouse wheels report ~100px per notch, trackpad pinch only a few px; clamp so one notch ≈ 15%.
@@ -31,6 +33,27 @@ export function isEditableTarget(el: EventTarget | null): boolean {
  */
 export function isBlankCanvasTarget(target: Element | null): boolean {
   return !target?.closest('[data-node-id], [data-no-drag]')
+}
+
+/** Edges delete immediately; nodes (which may cascade edges and cancel tasks) ask first. */
+export async function deleteSelection(nodeIds: string[], edgeIds: string[]): Promise<boolean> {
+  const store = useCanvasStore.getState()
+  if (nodeIds.length) {
+    const { nodes, edges, activeTasks } = summarizeNodeRemoval(store.doc, nodeIds)
+    const parts = [edges ? `及其 ${edges} 条连线` : '', activeTasks ? `，并取消 ${activeTasks} 个进行中的任务` : '']
+    const ok = await confirm({
+      title: nodes > 1 ? `删除 ${nodes} 个节点？` : '删除该节点？',
+      description: `将删除所选节点${parts.join('')}。此操作无法撤销。`,
+      confirmLabel: '删除',
+      destructive: true,
+    })
+    if (!ok) return false
+  }
+  const s = useCanvasStore.getState()
+  if (edgeIds.length) s.removeEdges(edgeIds)
+  if (nodeIds.length) s.removeNodes(nodeIds)
+  void persistence.saveNow()
+  return true
 }
 
 export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void {
@@ -103,9 +126,8 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void
         const { selection } = store.getState().ui
         if (!selection.nodeIds.length && !selection.edgeIds.length) return
         e.preventDefault()
-        if (selection.edgeIds.length) store.getState().removeEdges(selection.edgeIds)
-        if (selection.nodeIds.length) store.getState().removeNodes(selection.nodeIds)
-        void persistence.saveNow()
+        if (isConfirmOpen()) return
+        void deleteSelection(selection.nodeIds, selection.edgeIds)
       }
     }
 

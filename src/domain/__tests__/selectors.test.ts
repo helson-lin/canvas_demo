@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createEmptyDocument, selectGeneratorInputs, selectImageNodeView, type CanvasDocument } from '@/domain'
+import { createEmptyDocument, selectGeneratorInputs, selectImageNodeView, summarizeNodeRemoval, type CanvasDocument } from '@/domain'
 
 function doc(): CanvasDocument {
   const d = createEmptyDocument()
@@ -35,5 +35,18 @@ describe('selectors', () => {
     expect(selectImageNodeView(d, 'out')).toBe('running')
     d.tasks.t.status = 'interrupted'
     expect(selectImageNodeView(d, 'out')).toBe('failed')
+  })
+})
+
+describe('summarizeNodeRemoval', () => {
+  it('counts nodes, attached edges and tasks that would be cancelled', () => {
+    const d = doc()
+    d.tasks.t = {
+      id: 't', generatorNodeId: 'g', inputSnapshot: { imageAssetIds: [], prompts: [] },
+      params: { aspectRatio: '1:1' }, status: 'running', attempt: 1, idempotencyKey: 'k',
+      queuedAt: 0, expectedDurationMs: 1, createdAt: 0, updatedAt: 0,
+    }
+    expect(summarizeNodeRemoval(d, ['out'])).toEqual({ nodes: 1, edges: 1, activeTasks: 1 })
+    expect(summarizeNodeRemoval(d, ['img', 'p', 'missing'])).toEqual({ nodes: 2, edges: 2, activeTasks: 0 })
   })
 })

@@ -59,3 +59,24 @@ export function selectImageNodeView(doc: CanvasDocument, nodeId: string): ImageN
       return 'missing'
   }
 }
+
+export interface RemovalSummary {
+  nodes: number
+  edges: number
+  /** Queued/running tasks that removing these nodes will cancel. */
+  activeTasks: number
+}
+
+/** What deleting `nodeIds` will take with it — shown in the delete confirmation. */
+export function summarizeNodeRemoval(doc: CanvasDocument, nodeIds: string[]): RemovalSummary {
+  const ids = new Set(nodeIds.filter((id) => doc.nodes[id]))
+  const edges = Object.values(doc.edges).filter((e) => ids.has(e.source) || ids.has(e.target)).length
+  const tasks = new Set<string>()
+  for (const id of ids) {
+    const node = doc.nodes[id]
+    const taskId =
+      node?.type === 'generator' ? node.data.activeTaskId : node?.type === 'image' ? node.data.pendingTaskId : undefined
+    if (taskId && isTaskActive(doc.tasks[taskId])) tasks.add(taskId)
+  }
+  return { nodes: ids.size, edges, activeTasks: tasks.size }
+}
