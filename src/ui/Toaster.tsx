@@ -7,7 +7,12 @@ export function Toaster() {
   useEffect(
     () =>
       subscribeToasts((t) =>
-        showToast({ title: t.title, description: t.description, status: t.kind === 'info' ? 'info' : t.kind }),
+        showToast({
+          title: t.title,
+          description: t.description,
+          status: t.kind === 'info' ? 'info' : t.kind,
+          action: t.action && { label: t.action.label, onClick: t.action.onClick },
+        }),
       ),
     [showToast],
   )

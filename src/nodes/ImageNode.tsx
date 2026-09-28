@@ -1,6 +1,6 @@
 // OWNER: T2
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ImageIcon, RotateCcw, Upload } from 'lucide-react'
+import { Check, Clock3, ImageIcon, LoaderCircle, RotateCcw, Sparkles, TriangleAlert, Upload } from 'lucide-react'
 import { Button } from '@/components/motion/button/base'
 import { ImageGeneration, type ImageGenerationStatus } from '@/components/agents/image-generation'
 import { Loader } from '@/components/motion/loader'
@@ -21,6 +21,8 @@ import { NodeStatus, NodeTitle } from '@/ui/NodeStatus'
 import { toast } from '@/ui/toast'
 import { sameNodeContent } from './memo'
 import { NodeFrame } from './NodeFrame'
+import { ResultLightbox } from './ResultLightbox'
+import { cn } from '@/lib/utils'
 
 // TODO(contract): should move into assetStore as an atomic `useSampleImage` (see handoff T2).
 function pickSample(nodeId: string, sample: SampleImage) {
@@ -82,33 +84,70 @@ function useGenerationStatus(task: Task, hasImage: boolean): ImageGenerationStat
 }
 
 /** Placeholder and result of a generation task, rendered with beUI ImageGeneration. */
+const STATUS_ICON: Record<ImageGenerationStatus, ReactNode> = {
+  queued: <Clock3 className="size-3.5" aria-hidden />,
+  generating: <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden />,
+  refining: <Sparkles className="size-3.5" aria-hidden />,
+  complete: <Check className="size-3.5" aria-hidden />,
+  error: <TriangleAlert className="size-3.5" aria-hidden />,
+}
+
+/**
+ * Image-first result: the media spans the card; status, prompt and retry share one caption row so the
+ * picture — the thing the creator came for — carries the node. Double-click opens the large view.
+ */
 function ResultImage({ task, url }: { task: Task; url: string | null }) {
   const status = useGenerationStatus(task, !!url)
+  const [open, setOpen] = useState(false)
   const [w, h] = task.params.aspectRatio.split(':')
   const output = MOCK_OUTPUTS[task.params.aspectRatio]
   const prompt = task.inputSnapshot.prompts.join('，')
   const canRetry = task.status === 'failed' || task.status === 'interrupted'
-  const testId = status === 'complete' ? 'image-result' : status === 'error' ? 'image-failed' : 'image-pending'
+  const isError = status === 'error'
+  const testId = status === 'complete' ? 'image-result' : isError ? 'image-failed' : 'image-pending'
+  const canOpen = status === 'complete' && !!url
   return (
-    <div data-testid={testId} data-status={status}>
-      <ImageGeneration
-        status={status}
-        size="fluid"
-        aspectRatio={`${w} / ${h}`}
-        prompt={prompt || undefined}
-        label={prompt ? `生成图片：${prompt}` : '生成图片'}
-        resolution={`${output.width} × ${output.height}`}
-        statusText={status === 'error' ? (task.error?.message ?? '任务未完成') : STATUS_TEXT[status]}
+    <div data-testid={testId} data-status={status} className="flex h-full flex-col">
+      <div
+        onDoubleClick={canOpen ? () => setOpen(true) : undefined}
+        title={canOpen ? '双击查看大图' : undefined}
+        className={canOpen ? 'cursor-zoom-in' : undefined}
       >
-        {url ? <img src={url} alt={prompt || '生成结果'} draggable={false} className="size-full object-cover" /> : null}
-      </ImageGeneration>
-      {/* ImageGeneration's built-in retry label is English-only; render our own. */}
-      {canRetry && (
-        <Button data-no-drag size="sm" variant="secondary" className="mt-2" onClick={() => void retryTask(task.id)}>
-          <RotateCcw className="h-3.5 w-3.5" />
-          重试
-        </Button>
-      )}
+        <ImageGeneration
+          status={status}
+          size="fluid"
+          aspectRatio={`${w} / ${h}`}
+          label={prompt ? `生成图片：${prompt}` : '生成图片'}
+          resolution={`${output.width} × ${output.height}`}
+          showStatus={false}
+        >
+          {url ? <img src={url} alt={prompt || '生成结果'} draggable={false} className="size-full object-cover" /> : null}
+        </ImageGeneration>
+      </div>
+      <div className="flex min-h-0 flex-1 items-center gap-2 px-1.5 pt-1.5">
+        <div className="min-w-0 flex-1" aria-live="polite">
+          <p
+            className={cn(
+              'flex items-center gap-1.5 text-xs font-medium',
+              isError ? 'text-destructive' : status === 'complete' ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            {STATUS_ICON[status]}
+            {STATUS_TEXT[status]}
+            {task.attempt > 1 && <span className="font-normal text-muted-foreground">· 第 {task.attempt} 次</span>}
+          </p>
+          <p className={cn('mt-0.5 truncate text-xs', isError ? 'text-destructive/90' : 'text-muted-foreground')}>
+            {isError ? (task.error?.message ?? '任务未完成') : prompt || '（无提示词）'}
+          </p>
+        </div>
+        {canRetry && (
+          <Button data-no-drag size="sm" variant="secondary" onClick={() => void retryTask(task.id)}>
+            <RotateCcw className="size-3.5" aria-hidden />
+            重试
+          </Button>
+        )}
+      </div>
+      {canOpen && <ResultLightbox open={open} onOpenChange={setOpen} task={task} url={url} />}
     </div>
   )
 }
@@ -201,7 +240,10 @@ function ImageNodeView({ node }: { node: ImageNodeModel }) {
     <NodeFrame
       node={node}
       selected={selected}
-      title={<NodeTitle icon={<ImageIcon className="h-3.5 w-3.5" />} label="图片" sample={node.sample} />}
+      title={
+        <NodeTitle icon={<ImageIcon className="h-3.5 w-3.5" />} label={generationTask ? '生成结果' : '图片'} sample={node.sample} />
+      }
+      bodyClassName={generationTask ? 'p-1.5 overflow-hidden' : undefined}
     >
       {body}
     </NodeFrame>

@@ -38,8 +38,10 @@ function setup(opts: { prompt?: string; withImage?: boolean } = {}) {
 }
 
 function useService(service: TaskService) {
-  configureTaskRunner({ service, persistRemote, persistence: { saveNow }, now: () => Date.now() })
+  configureTaskRunner({ service, persistRemote, persistence: { saveNow }, now: () => Date.now(), reveal })
 }
+
+const reveal = vi.fn()
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -94,6 +96,22 @@ describe('taskRunner', () => {
     expect(task(taskId).resultAssetId).toBe(`asset_gen_${taskId}`)
     expect(doc().nodes[imageId!]).toEqual(origBefore)
     expect(doc().assets.asset_orig!.kind).toBe('sample')
+  })
+
+  it('reveals the placeholder on submit and offers 定位 on success', async () => {
+    reveal.mockClear()
+    const toasts: ToastMessage[] = []
+    const off = subscribeToasts((t) => toasts.push(t))
+    const { genId } = setup({ prompt: 'a cat' })
+    const taskId = (await startGeneration(genId))!
+    const placeholderId = task(taskId).resultNodeId!
+    expect(reveal).toHaveBeenCalledWith(placeholderId)
+    await vi.advanceTimersByTimeAsync(4000)
+    const done = toasts.find((t) => t.title === '生成完成')!
+    expect(done.action?.label).toBe('定位')
+    done.action!.onClick()
+    expect(reveal).toHaveBeenLastCalledWith(placeholderId, { select: true })
+    off()
   })
 
   it('blocks duplicate submit while active', async () => {

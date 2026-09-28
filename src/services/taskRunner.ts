@@ -4,7 +4,7 @@ import {
   newId,
   selectActiveTask,
   selectGeneratorInputs,
-  findFreePosition,
+  findResultSlot,
   resultNodeSize,
   TASK_ERROR_CODES,
   type CanvasDocument,
@@ -19,6 +19,7 @@ import { persistence as defaultPersistence } from '@/persistence/persist'
 import { persistRemote as defaultPersistRemote } from '@/services/assetStore'
 import { createMockTaskService } from '@/services/mockTaskService'
 import { getMockConfig } from '@/services/mockConfig'
+import { revealNode } from '@/canvas/reveal'
 import { useCanvasStore } from '@/store/canvasStore'
 import { toast } from '@/ui/toast'
 
@@ -31,6 +32,8 @@ export interface TaskRunnerDeps {
   persistRemote: (url: string, originTaskId: string) => Promise<string>
   persistence: Pick<PersistenceAdapter, 'saveNow'>
   now: () => number
+  /** Brings a result node into view (UI concern; injectable so tests stay headless). */
+  reveal: (nodeId: string, opts?: { select?: boolean }) => void
 }
 
 let deps: TaskRunnerDeps = {
@@ -38,6 +41,7 @@ let deps: TaskRunnerDeps = {
   persistRemote: defaultPersistRemote,
   persistence: defaultPersistence,
   now: () => Date.now(),
+  reveal: (nodeId, opts) => revealNode(nodeId, opts),
 }
 
 interface Tracker {
@@ -134,12 +138,7 @@ export async function startGeneration(generatorId: string): Promise<string | nul
     const placeholder: ImageNode = {
       id: placeholderId,
       type: 'image',
-      position: findFreePosition(
-        Object.values(draft.nodes),
-        { x: g.position.x + g.size.w + RESULT_GAP_PX, y: g.position.y },
-        resultNodeSize(params.aspectRatio),
-        { x: 0, y: 24 },
-      ),
+      position: findResultSlot(Object.values(draft.nodes), g, resultNodeSize(params.aspectRatio), RESULT_GAP_PX),
       size: resultNodeSize(params.aspectRatio),
       createdAt: now,
       data: { assetId: null, pendingTaskId: taskId },
@@ -151,6 +150,7 @@ export async function startGeneration(generatorId: string): Promise<string | nul
     g.data.activeTaskId = taskId
   })
   await save()
+  deps.reveal(placeholderId)
   await submitTask(task)
   return taskId
 }
@@ -289,7 +289,13 @@ async function complete(taskId: string, res: TaskStatusResponse): Promise<void> 
     applied = true
   })
   await save()
-  if (applied) toast('生成完成', { kind: 'success' })
+  const resultNodeId = doc().tasks[taskId]?.resultNodeId
+  if (applied && resultNodeId) {
+    toast('生成完成', {
+      kind: 'success',
+      action: { label: '定位', onClick: () => deps.reveal(resultNodeId, { select: true }) },
+    })
+  }
 }
 
 export async function retryTask(taskId: string): Promise<string | null> {
@@ -338,6 +344,7 @@ export async function retryTask(taskId: string): Promise<string | null> {
     if (g?.type === 'generator') g.data.activeTaskId = task.id
   })
   await save()
+  if (placeholderId) deps.reveal(placeholderId)
   await submitTask(task)
   return task.id
 }

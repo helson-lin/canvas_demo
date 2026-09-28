@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { clampZoom, MAX_ZOOM, MIN_ZOOM, screenToWorld, worldToScreen, zoomAt } from '@/canvas/coords'
 import { dragPosition, exceedsDragThreshold, nextSelection } from '@/canvas/useNodeDrag'
 import { isBlankCanvasTarget, wheelZoomFactor } from '@/canvas/usePanZoom'
+import { panToReveal } from '@/canvas/reveal'
 
 const vps = [
   { x: 0, y: 0, zoom: 1 },
@@ -83,5 +84,18 @@ describe('isBlankCanvasTarget', () => {
     expect(isBlankCanvasTarget($('blank'))).toBe(true)
     expect(isBlankCanvasTarget($('inNode'))).toBe(false)
     expect(isBlankCanvasTarget($('edge'))).toBe(false)
+  })
+})
+
+describe('panToReveal', () => {
+  const container = { w: 1000, h: 800 }
+  it('returns null when the node is already inside the margin', () => {
+    expect(panToReveal({ x: 0, y: 0, zoom: 1 }, { x: 100, y: 100, w: 200, h: 200 }, container, 72)).toBeNull()
+  })
+  it('pans the minimum amount to bring an off-screen node in, keeping zoom', () => {
+    const vp = panToReveal({ x: 0, y: 0, zoom: 0.5 }, { x: 2000, y: 1800, w: 240, h: 300 }, container, 72)!
+    expect(vp.zoom).toBe(0.5)
+    expect(2000 * 0.5 + vp.x + 240 * 0.5).toBeCloseTo(1000 - 72)
+    expect(1800 * 0.5 + vp.y + 300 * 0.5).toBeCloseTo(800 - 72)
   })
 })
