@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { clampZoom, MAX_ZOOM, MIN_ZOOM, screenToWorld, worldToScreen, zoomAt } from '@/canvas/coords'
 import { dragPosition, exceedsDragThreshold, nextSelection } from '@/canvas/useNodeDrag'
-import { wheelZoomFactor } from '@/canvas/usePanZoom'
+import { isBlankCanvasTarget, wheelZoomFactor } from '@/canvas/usePanZoom'
 
 const vps = [
   { x: 0, y: 0, zoom: 1 },
@@ -69,5 +69,19 @@ describe('drag math', () => {
     expect(nextSelection(['a', 'b'], 'c', false)).toEqual(['c'])
     expect(nextSelection(['a'], 'b', true)).toEqual(['a', 'b'])
     expect(nextSelection(['a', 'b'], 'a', true)).toEqual(['b'])
+  })
+})
+
+describe('isBlankCanvasTarget', () => {
+  it('treats nodes, edges, handles and controls as non-blank', () => {
+    document.body.innerHTML = `
+      <div id="canvas"><div id="blank"></div>
+        <div data-node-id="n1"><span id="inNode"></span></div>
+        <svg><g data-no-drag><path id="edge"></path></g></svg>
+      </div>`
+    const $ = (id: string) => document.getElementById(id)
+    expect(isBlankCanvasTarget($('blank'))).toBe(true)
+    expect(isBlankCanvasTarget($('inNode'))).toBe(false)
+    expect(isBlankCanvasTarget($('edge'))).toBe(false)
   })
 })

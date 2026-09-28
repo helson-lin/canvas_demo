@@ -25,6 +25,14 @@ export function isEditableTarget(el: EventTarget | null): boolean {
   return el.isContentEditable || !!el.closest('input, textarea, select, [contenteditable="true"]')
 }
 
+/**
+ * True when a press lands on empty canvas. Edges, handles and controls opt out with [data-no-drag]:
+ * their React handlers run after this native listener, so stopPropagation there can't prevent a blank-click deselect.
+ */
+export function isBlankCanvasTarget(target: Element | null): boolean {
+  return !target?.closest('[data-node-id], [data-no-drag]')
+}
+
 export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void {
   useEffect(() => {
     const el = containerRef.current
@@ -48,7 +56,7 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void
 
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target instanceof Element ? e.target : null
-      const onNode = !!target?.closest('[data-node-id]')
+      const onNode = !isBlankCanvasTarget(target)
       const isMiddle = e.button === 1
       const isSpacePan = e.button === 0 && spaceDown
       const isBlankPan = e.button === 0 && !onNode
