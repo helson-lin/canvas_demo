@@ -15,8 +15,9 @@
     ]
   },
   "ignorePatterns": [
-    "src/components/motion/**",
+    ".claude/**",
     "dist/**",
-    ".claude/**"
+    "src/components/agents/**",
+    "src/components/motion/**"
   ]
 }

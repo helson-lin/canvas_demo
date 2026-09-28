@@ -1,5 +1,5 @@
 // OWNER: T2
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { ImageIcon, RotateCcw, Sparkles, Wand2 } from 'lucide-react'
 import { Button } from '@/components/motion/button/base'
 import { StatefulButton, type ButtonState } from '@/components/motion/button/stateful'
@@ -19,6 +19,7 @@ import { retryTask, startGeneration } from '@/services/taskRunner'
 import { useCanvasStore } from '@/store/canvasStore'
 import { NodeStatus, NodeTitle } from '@/ui/NodeStatus'
 import { toast } from '@/ui/toast'
+import { sameNodeContent } from './memo'
 import { NodeFrame } from './NodeFrame'
 
 const RATIOS: AspectRatio[] = ['1:1', '16:9', '9:16']
@@ -51,7 +52,7 @@ function Thumb({ assetId }: { assetId: string | null }) {
   )
 }
 
-export function GeneratorNode({ node }: { node: GeneratorNodeModel }) {
+function GeneratorNodeView({ node }: { node: GeneratorNodeModel }) {
   const selected = useCanvasStore((s) => s.ui.selection.nodeIds.includes(node.id))
   const updateNodeData = useCanvasStore((s) => s.updateNodeData)
   // Serialize so the selector returns a value-comparable primitive; avoids re-rendering on unrelated doc changes.
@@ -164,3 +165,5 @@ export function GeneratorNode({ node }: { node: GeneratorNodeModel }) {
     </NodeFrame>
   )
 }
+
+export const GeneratorNode = memo(GeneratorNodeView, sameNodeContent)

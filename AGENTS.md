@@ -51,8 +51,9 @@ src/
 
 ## 5. UI 与 beUI
 - UI 控件一律优先使用 beUI（https://beui.dev）。安装：`npx shadcn@latest add -y @beui/<name>`（名称见 https://beui.dev/registry.json），文件落在 `src/components/motion/`。
-- 已安装：button-base、button-stateful、input、tabs、switch、animated-badge、loader、animated-toast-stack、tooltip、dock、drawer、context-menu。
-- `src/components/motion/` 是第三方源码，**尽量不改**；必须改时在 handoff 中列出 diff 原因。lint 已忽略该目录。
+- 已安装：button-base、button-stateful、input、tabs、switch、animated-badge、loader、animated-toast-stack、tooltip、dock、drawer、context-menu（`src/components/motion/`），image-generation（`src/components/agents/`）。
+- beUI 的 Tabs 指示器、AnimatedBadge 等使用 motion **layout 动画**：组件重渲染时页面位置变化会被动画化。节点内容必须保持 `memo(…, sameNodeContent)`，位置只由 NodeFrame 订阅，否则拖动时控件会“残留”在原位置。
+- `src/components/motion/`、`src/components/agents/` 是第三方源码，**尽量不改**；必须改时在 handoff 中列出 diff 原因。lint 已忽略该目录。
 - **画布平移、缩放、节点拖动、连线不使用任何组件库**，也不得用 motion 动画驱动节点 `position`。
 - 节点内交互控件需标 `data-no-drag`（或为 input/textarea/button/select），避免触发节点拖动与画布平移。
 - 新增 npm 依赖属于契约变更，需要在 handoff 中说明。

@@ -4,8 +4,8 @@ import {
   newId,
   selectActiveTask,
   selectGeneratorInputs,
-  DEFAULT_NODE_SIZE,
   findFreePosition,
+  resultNodeSize,
   TASK_ERROR_CODES,
   type CanvasDocument,
   type ImageNode,
@@ -137,10 +137,10 @@ export async function startGeneration(generatorId: string): Promise<string | nul
       position: findFreePosition(
         Object.values(draft.nodes),
         { x: g.position.x + g.size.w + RESULT_GAP_PX, y: g.position.y },
-        DEFAULT_NODE_SIZE.image,
+        resultNodeSize(params.aspectRatio),
         { x: 0, y: 24 },
       ),
-      size: { ...DEFAULT_NODE_SIZE.image },
+      size: resultNodeSize(params.aspectRatio),
       createdAt: now,
       data: { assetId: null, pendingTaskId: taskId },
     }

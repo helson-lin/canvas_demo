@@ -1,14 +1,17 @@
 // OWNER: T2
-import { useRef, type ReactNode } from 'react'
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ImageIcon, RotateCcw, Upload } from 'lucide-react'
 import { Button } from '@/components/motion/button/base'
+import { ImageGeneration, type ImageGenerationStatus } from '@/components/agents/image-generation'
 import { Loader } from '@/components/motion/loader'
 import {
+  MOCK_OUTPUTS,
   newId,
   SAMPLE_IMAGES,
   selectImageNodeView,
   type ImageNode as ImageNodeModel,
   type SampleImage,
+  type Task,
 } from '@/domain'
 import { persistence } from '@/persistence/persist'
 import { importFile, useAssetUrl } from '@/services/assetStore'
@@ -16,6 +19,7 @@ import { retryTask } from '@/services/taskRunner'
 import { useCanvasStore } from '@/store/canvasStore'
 import { NodeStatus, NodeTitle } from '@/ui/NodeStatus'
 import { toast } from '@/ui/toast'
+import { sameNodeContent } from './memo'
 import { NodeFrame } from './NodeFrame'
 
 // TODO(contract): should move into assetStore as an atomic `useSampleImage` (see handoff T2).
@@ -47,16 +51,86 @@ async function uploadFile(nodeId: string, file: File) {
   }
 }
 
-export function ImageNode({ node }: { node: ImageNodeModel }) {
+const STATUS_TEXT: Record<ImageGenerationStatus, string> = {
+  queued: '排队中',
+  generating: '生成中',
+  refining: '细化中',
+  complete: '已完成',
+  error: '生成失败',
+}
+
+/** Last 30% of the expected duration shows as "refining" — purely presentational, derived from task timing. */
+function useGenerationStatus(task: Task, hasImage: boolean): ImageGenerationStatus {
+  const refineAt = task.queuedAt + task.expectedDurationMs * 0.7
+  const [now, setNow] = useState(Date.now)
+  useEffect(() => {
+    if (task.status !== 'running') return
+    const timer = setTimeout(() => setNow(Date.now()), Math.max(0, refineAt - Date.now()))
+    return () => clearTimeout(timer)
+  }, [task.status, refineAt])
+  const refining = now >= refineAt
+  switch (task.status) {
+    case 'queued':
+      return 'queued'
+    case 'running':
+      return refining ? 'refining' : 'generating'
+    case 'succeeded':
+      return hasImage ? 'complete' : 'refining'
+    default:
+      return 'error'
+  }
+}
+
+/** Placeholder and result of a generation task, rendered with beUI ImageGeneration. */
+function ResultImage({ task, url }: { task: Task; url: string | null }) {
+  const status = useGenerationStatus(task, !!url)
+  const [w, h] = task.params.aspectRatio.split(':')
+  const output = MOCK_OUTPUTS[task.params.aspectRatio]
+  const prompt = task.inputSnapshot.prompts.join('，')
+  const canRetry = task.status === 'failed' || task.status === 'interrupted'
+  const testId = status === 'complete' ? 'image-result' : status === 'error' ? 'image-failed' : 'image-pending'
+  return (
+    <div data-testid={testId} data-status={status}>
+      <ImageGeneration
+        status={status}
+        size="fluid"
+        aspectRatio={`${w} / ${h}`}
+        prompt={prompt || undefined}
+        label={prompt ? `生成图片：${prompt}` : '生成图片'}
+        resolution={`${output.width} × ${output.height}`}
+        statusText={status === 'error' ? (task.error?.message ?? '任务未完成') : STATUS_TEXT[status]}
+      >
+        {url ? <img src={url} alt={prompt || '生成结果'} draggable={false} className="size-full object-cover" /> : null}
+      </ImageGeneration>
+      {/* ImageGeneration's built-in retry label is English-only; render our own. */}
+      {canRetry && (
+        <Button data-no-drag size="sm" variant="secondary" className="mt-2" onClick={() => void retryTask(task.id)}>
+          <RotateCcw className="h-3.5 w-3.5" />
+          重试
+        </Button>
+      )}
+    </div>
+  )
+}
+
+function ImageNodeView({ node }: { node: ImageNodeModel }) {
   const selected = useCanvasStore((s) => s.ui.selection.nodeIds.includes(node.id))
   const view = useCanvasStore((s) => selectImageNodeView(s.doc, node.id))
   const pendingTaskId = node.data.pendingTaskId
   const pendingTask = useCanvasStore((s) => (pendingTaskId ? s.doc.tasks[pendingTaskId] : undefined))
+  const originTaskId = useCanvasStore((s) => {
+    const asset = node.data.assetId ? s.doc.assets[node.data.assetId] : undefined
+    return asset?.origin?.taskId
+  })
+  const originTask = useCanvasStore((s) => (originTaskId ? s.doc.tasks[originTaskId] : undefined))
   const url = useAssetUrl(node.data.assetId)
   const fileRef = useRef<HTMLInputElement>(null)
+  const generationTask = pendingTask ?? originTask
 
   let body: ReactNode
-  if (view === 'ready' && url) {
+  if (generationTask && (view !== 'missing' || pendingTask)) {
+    body = <ResultImage task={generationTask} url={url} />
+  } else if (view === 'ready' && url) {
     body = <img src={url} alt="图片" draggable={false} className="h-full w-full rounded-lg object-contain" />
   } else if (view === 'ready') {
     // Blob-backed assets resolve asynchronously after a reload; don't flash the "missing" picker meanwhile.
@@ -133,3 +207,5 @@ export function ImageNode({ node }: { node: ImageNodeModel }) {
     </NodeFrame>
   )
 }
+
+export const ImageNode = memo(ImageNodeView, sameNodeContent)

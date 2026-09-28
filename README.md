@@ -23,7 +23,7 @@ pnpm dev          # http://localhost:5173
 | 连线 | 从图片/提示词节点右侧圆点拖到生成节点上松开；非法连接会提示原因 |
 | 删除 | 选中节点或连线后按 Delete/Backspace；悬停连线点击 ×。删除节点会同时删除相关连线 |
 | 图片节点 | 选择示例图，或上传本地图片（刷新后可恢复） |
-| 生成 | 生成节点显示当前引用的图片与提示词，选择比例后点「生成」：排队中 → 生成中 → 已完成，结果作为新图片节点出现在右侧（虚线连接） |
+| 生成 | 生成节点显示当前引用的图片与提示词，选择比例后点「生成」。结果节点使用 beUI ImageGeneration：排队中 → 生成中 → 细化中 → 已完成（按所选比例预留尺寸），出现在右侧（虚线连接） |
 | 触发失败 | ① 提示词包含 `#fail`；② 右上角「Mock 控制台」打开「下一次任务失败」或「所有任务失败」 |
 | 重试 | 失败/中断后点「重试」，沿用原输入快照与参数，复用同一个结果占位节点 |
 | 保存 | 自动保存到 IndexedDB，左下角显示保存状态 |
@@ -78,5 +78,5 @@ pnpm dev          # http://localhost:5173
 ## 依赖、现成代码与 AI 使用
 
 - 主要依赖：React 19、Vite 8、TypeScript、Tailwind CSS v4、Zustand + immer（状态）、idb-keyval（IndexedDB）、nanoid（ID）、Vitest + Testing Library + fake-indexeddb（测试）。
-- 现成代码：UI 控件来自 [beUI](https://beui.dev)（通过 `npx shadcn add @beui/<name>` 拷贝到 `src/components/motion/`，未修改），图标为 lucide-react。画布、连线、任务引擎、持久化均为本项目实现。
+- 现成代码：UI 控件来自 [beUI](https://beui.dev)（通过 `npx shadcn add @beui/<name>` 拷贝到 `src/components/motion/` 与 `src/components/agents/`，未修改；ImageGeneration 自带的英文重试按钮未使用，改为自有「重试」按钮），图标为 lucide-react。画布、连线、任务引擎、持久化均为本项目实现。
 - AI 工具：使用 Claude Code（主会话负责架构、拆解、review 与集成；子代理并行实现 T1–T5）与 Codex（实现 C1 工具栏）。过程与关键取舍见 [docs/AI_LOG.md](docs/AI_LOG.md)，各模块交付记录见 [docs/handoff/](docs/handoff/)。

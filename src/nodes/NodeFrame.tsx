@@ -4,6 +4,7 @@ import type { CanvasNode } from '@/domain'
 import { cn } from '@/lib/utils'
 import { useNodeDrag } from '@/canvas/useNodeDrag'
 import { Handle } from '@/canvas/Handle'
+import { useCanvasStore } from '@/store/canvasStore'
 
 export interface NodeFrameProps {
   node: CanvasNode
@@ -16,6 +17,8 @@ export interface NodeFrameProps {
 
 export function NodeFrame({ node, selected, title, children, handles }: NodeFrameProps) {
   const dragHandlers = useNodeDrag(node.id)
+  // Subscribe to position directly so moving re-renders only the frame, not the (memoized) body.
+  const position = useCanvasStore((s) => s.doc.nodes[node.id]?.position ?? node.position)
   return (
     <div
       data-node-id={node.id}
@@ -24,7 +27,7 @@ export function NodeFrame({ node, selected, title, children, handles }: NodeFram
         'absolute isolate flex touch-none flex-col rounded-xl border bg-card text-card-foreground shadow-sm',
         selected && 'ring-2 ring-primary',
       )}
-      style={{ left: node.position.x, top: node.position.y, width: node.size.w, height: node.size.h, zIndex: selected ? 1 : 0 }}
+      style={{ left: position.x, top: position.y, width: node.size.w, height: node.size.h, zIndex: selected ? 1 : 0 }}
     >
       <div className="flex cursor-move items-center justify-between border-b px-3 py-2 text-xs font-medium">
         {title}

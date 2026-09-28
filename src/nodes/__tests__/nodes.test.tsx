@@ -132,13 +132,38 @@ describe('ImageNode view states', () => {
     expect(screen.getByText('示例')).toBeTruthy()
   })
 
-  it('queued / running render loader and badge', () => {
+  it('queued / running render ImageGeneration states', () => {
     renderImage(docWith({ assetId: null, pendingTaskId: 't1' }, makeTask('t1', 'gen', 'queued')))
-    expect(screen.getByTestId('image-pending')).toBeTruthy()
-    expect(screen.getByTestId('task-status').textContent).toContain('排队中')
+    expect(screen.getByTestId('image-pending').dataset.status).toBe('queued')
+    expect(screen.getByText('排队中')).toBeTruthy()
     cleanup()
     renderImage(docWith({ assetId: null, pendingTaskId: 't1' }, makeTask('t1', 'gen', 'running')))
-    expect(screen.getByTestId('task-status').textContent).toContain('生成中')
+    expect(screen.getByTestId('image-pending').dataset.status).toMatch(/generating|refining/)
+  })
+
+  it('running switches from generating to refining at 70% of the expected duration', () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(10_000)
+      const task = makeTask('t1', 'gen', 'running', { queuedAt: 10_000, expectedDurationMs: 1000 })
+      renderImage(docWith({ assetId: null, pendingTaskId: 't1' }, task))
+      expect(screen.getByTestId('image-pending').dataset.status).toBe('generating')
+      act(() => {
+        vi.advanceTimersByTime(700)
+      })
+      expect(screen.getByTestId('image-pending').dataset.status).toBe('refining')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('a generated result renders the completed ImageGeneration with the image', () => {
+    const task = makeTask('t1', 'gen', 'succeeded', { inputSnapshot: { imageAssetIds: [], prompts: ['柴犬'] } })
+    const doc = docWith({ assetId: 'gen1' }, task)
+    doc.assets.gen1 = { id: 'gen1', kind: 'generated', src: { type: 'url', url: '/samples/result-square.svg' }, origin: { taskId: 't1' }, createdAt: 0 }
+    renderImage(doc)
+    expect(screen.getByTestId('image-result').dataset.status).toBe('complete')
+    expect((screen.getByAltText('柴犬') as HTMLImageElement).src).toContain('/samples/result-square.svg')
   })
 
   it('failed renders error and retry', () => {

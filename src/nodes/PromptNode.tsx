@@ -1,12 +1,14 @@
 // OWNER: T2
+import { memo } from 'react'
 import { Type } from 'lucide-react'
 import type { PromptNode as PromptNodeModel } from '@/domain'
 import { persistence } from '@/persistence/persist'
 import { useCanvasStore } from '@/store/canvasStore'
 import { NodeTitle } from '@/ui/NodeStatus'
+import { sameNodeContent } from './memo'
 import { NodeFrame } from './NodeFrame'
 
-export function PromptNode({ node }: { node: PromptNodeModel }) {
+function PromptNodeView({ node }: { node: PromptNodeModel }) {
   const selected = useCanvasStore((s) => s.ui.selection.nodeIds.includes(node.id))
   const updateNodeData = useCanvasStore((s) => s.updateNodeData)
   const text = node.data.text
@@ -34,3 +36,5 @@ export function PromptNode({ node }: { node: PromptNodeModel }) {
     </NodeFrame>
   )
 }
+
+export const PromptNode = memo(PromptNodeView, sameNodeContent)

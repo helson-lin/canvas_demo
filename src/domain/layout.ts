@@ -1,4 +1,4 @@
-import type { CanvasNode, Vec2 } from './types'
+import type { AspectRatio, CanvasNode, Vec2 } from './types'
 
 export interface Size {
   w: number
@@ -24,4 +24,15 @@ export function findFreePosition(nodes: CanvasNode[], desired: Vec2, size: Size,
     if (!nodes.some((n) => overlaps(pos, size, n))) return pos
   }
   return desired
+}
+
+const RESULT_NODE_WIDTH = 240
+// Node header + body padding + ImageGeneration status block + retry button.
+const RESULT_NODE_CHROME = 37 + 24 + 108
+
+/** Result placeholders reserve the output's aspect ratio so ImageGeneration never shifts layout. */
+export function resultNodeSize(aspectRatio: AspectRatio): Size {
+  const [w, h] = aspectRatio.split(':').map(Number)
+  const mediaW = RESULT_NODE_WIDTH - 24
+  return { w: RESULT_NODE_WIDTH, h: Math.round(RESULT_NODE_CHROME + (mediaW * h) / w) }
 }
