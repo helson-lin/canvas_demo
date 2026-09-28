@@ -5,6 +5,8 @@ import { persistence } from '@/persistence/persist'
 import { zoomAt } from './coords'
 
 const ZOOM_SPEED = 0.01
+// Mouse wheels report ~100px per notch, trackpad pinch only a few px; clamp so one notch ≈ 15%.
+const MAX_ZOOM_DELTA = 15
 const CLICK_SLOP = 3
 
 let spaceDown = false
@@ -14,7 +16,8 @@ export function isSpacePanActive(): boolean {
 }
 
 export function wheelZoomFactor(deltaY: number): number {
-  return Math.exp(-deltaY * ZOOM_SPEED)
+  const d = Math.max(-MAX_ZOOM_DELTA, Math.min(MAX_ZOOM_DELTA, deltaY))
+  return Math.exp(-d * ZOOM_SPEED)
 }
 
 export function isEditableTarget(el: EventTarget | null): boolean {

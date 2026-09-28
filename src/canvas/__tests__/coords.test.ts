@@ -46,6 +46,8 @@ describe('coords', () => {
   it('wheel zoom factor is symmetric', () => {
     expect(wheelZoomFactor(100) * wheelZoomFactor(-100)).toBeCloseTo(1, 12)
     expect(wheelZoomFactor(-10)).toBeGreaterThan(1)
+    // A mouse-wheel notch (~100px) is clamped to a gentle step.
+    expect(wheelZoomFactor(-100)).toBeCloseTo(Math.exp(0.15), 12)
   })
 })
 
