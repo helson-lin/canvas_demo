@@ -3,13 +3,14 @@ import type { ReactNode } from 'react'
 import type { CanvasNode } from '@/domain'
 import { cn } from '@/lib/utils'
 import { useNodeDrag } from '@/canvas/useNodeDrag'
+import { Handle } from '@/canvas/Handle'
 
 export interface NodeFrameProps {
   node: CanvasNode
   selected: boolean
   title: ReactNode
   children: ReactNode
-  /** Connection handles rendered by T3. */
+  /** Overrides the default connection handles (each Handle hides itself where the node type has none). */
   handles?: ReactNode
 }
 
@@ -30,7 +31,12 @@ export function NodeFrame({ node, selected, title, children, handles }: NodeFram
         <span className="font-mono text-[10px] text-muted-foreground">{node.id.slice(-6)}</span>
       </div>
       <div className="flex-1 p-3">{children}</div>
-      {handles}
+      {handles ?? (
+        <>
+          <Handle node={node} side="in" />
+          <Handle node={node} side="out" />
+        </>
+      )}
     </div>
   )
 }
