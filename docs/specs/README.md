@@ -4,25 +4,35 @@
 
 ## 依赖图与分支
 
+主体模块由 Claude 子代理开发，小模块交给 Codex。
+
 ```
-T0 foundation (阻塞，先合入 main)
- ├─ T1 canvas-viewport   feat/t1-viewport
- ├─ T2 node-ui           feat/t2-node-ui
- ├─ T3 edges             feat/t3-edges
- ├─ T4 task-engine       feat/t4-task-engine
- └─ T5 persistence       feat/t5-persistence
-T6 integration + README (T1–T5 合入后)  feat/t6-integration
+T0 foundation ✅ (已合入 main)
+ ├─ T1 canvas-viewport   feat/t1-viewport      Claude
+ ├─ T2 node-ui           feat/t2-node-ui       Claude
+ ├─ T3 edges             feat/t3-edges         Claude
+ ├─ T4 task-engine       feat/t4-task-engine   Claude
+ ├─ T5 persistence       feat/t5-persistence   Claude
+ ├─ C1 toolbar           feat/c1-toolbar       Codex
+ ├─ C2 devpanel          feat/c2-devpanel      Codex
+ └─ C3 status-ui         feat/c3-status-ui     Codex
+C4 README + AI 记录 (功能合入后)  feat/c4-docs   Codex
+T6 集成验收 (reviewer)            feat/t6-integration
 ```
 
-| ID | 分支 | 规格 | 依赖 | 可并行 |
-| --- | --- | --- | --- | --- |
-| T0 | `feat/t0-foundation` | [T0](T0-foundation.md) | — | 否（先做） |
-| T1 | `feat/t1-viewport` | [T1](T1-canvas-viewport.md) | T0 | 是 |
-| T2 | `feat/t2-node-ui` | [T2](T2-node-ui.md) | T0 | 是 |
-| T3 | `feat/t3-edges` | [T3](T3-edges.md) | T0 | 是 |
-| T4 | `feat/t4-task-engine` | [T4](T4-task-engine.md) | T0 | 是 |
-| T5 | `feat/t5-persistence` | [T5](T5-persistence.md) | T0 | 是 |
-| T6 | `feat/t6-integration` | [T6](T6-integration.md) | T1–T5 | 否 |
+| ID | 规格 | 执行者 | 依赖 |
+| --- | --- | --- | --- |
+| T0 | [T0](T0-foundation.md) | reviewer | — ✅ |
+| T1 | [T1](T1-canvas-viewport.md) | Claude | T0 |
+| T2 | [T2](T2-node-ui.md) | Claude | T0 |
+| T3 | [T3](T3-edges.md) | Claude | T0 |
+| T4 | [T4](T4-task-engine.md) | Claude | T0 |
+| T5 | [T5](T5-persistence.md) | Claude | T0 |
+| C1 | [C1](C1-toolbar.md) | Codex | T0 |
+| C2 | [C2](C2-devpanel.md) | Codex | T0 |
+| C3 | [C3](C3-status-ui.md) | Codex | T0 |
+| C4 | [C4](C4-docs.md) | Codex | 全部 |
+| T6 | [T6](T6-integration.md) | reviewer | 全部 |
 
 ## 并行规则（所有子任务必须遵守，完整约束见 [AGENTS.md](../../AGENTS.md)）
 
@@ -36,7 +46,7 @@ T6 integration + README (T1–T5 合入后)  feat/t6-integration
 
 ## 合并顺序（reviewer 执行）
 
-T0 → T1 → T3 → T2 → T4 → T5 → T6。每次合并后在 main 上跑全量检查。
+T1 → T3 → T2 → T4 → T5 → C1/C2/C3（随到随合）→ C4 → T6。每次合并后在 main 上跑全量检查。
 
 ## Review 清单
 

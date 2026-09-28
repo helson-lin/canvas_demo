@@ -3,7 +3,7 @@
 - 分支：`feat/t5-persistence` · 依赖：T0 · 必读 ARCHITECTURE.md §7、§7.1
 
 ## 拥有的文件
-`src/persistence/db.ts`、`persist.ts`、`src/domain/migrations.ts`、`src/services/assetStore.ts`、`src/ui/SaveIndicator.tsx`（新建）、`src/persistence/__tests__/*.test.ts`
+`src/persistence/db.ts`、`persist.ts`、`src/domain/migrations.ts`、`src/services/assetStore.ts`（`useSaveStatus`/`setSaveStatus` 已有，保持签名）、`src/persistence/__tests__/*.test.ts`
 
 ## 需求
 1. `db.ts`：idb-keyval 自定义 store `canvas-demo`；key：`doc`、`blob:<key>`。
@@ -18,7 +18,7 @@
    - `persistRemote(url, originTaskId) → assetId`：fetch → Blob → putBlob → upsertAsset(kind=generated)，**先 Blob 后文档**。
    - `useAssetUrl(assetId)`：url 源直接返回；blob 源 `createObjectURL` 并内存缓存（引用计数，卸载时 revoke）；缺失返回 `null`（UI 显示缺失占位）。
    - `gcBlobs()`：保存后空闲时删除无 Asset 引用的 blob（资产本身按引用保留，不因删节点而删）。
-5. SaveIndicator：已保存 / 保存中 / 保存失败（beUI Animated Badge）。
+5. 每次保存流转调用 `setSaveStatus({ status: 'saving' | 'saved' | 'error', ... })`。SaveIndicator UI 由 C3 实现。
 
 ## 验收（vitest + fake-indexeddb）
 - 保存→重载 round-trip：节点、位置、边、视口、资产、任务终态一致。

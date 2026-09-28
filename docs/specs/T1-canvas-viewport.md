@@ -12,7 +12,7 @@
 4. 节点拖动（NodeFrame 标题栏/空白区）：pointerdown 记录起点屏幕坐标与节点起始世界坐标，move 时 `pos = start + (now - startScreen)/zoom`；`setPointerCapture`；rAF 合并写 store；位移 < 3px 视为点击（选中）。
 5. 节点内部交互控件（input/textarea/button/select）不触发拖动：NodeFrame 检查 `event.target.closest('[data-no-drag], input, textarea, button, select')`。
 6. 选择：点击节点选中（高亮描边）；Shift 点击加选；点击空白取消选择；`Delete/Backspace`（焦点不在输入框时）调用 `removeNodes`/`removeEdges`。
-7. 右下角显示缩放百分比 + 「适配全部」按钮（beUI Button），适配 = 计算节点包围盒居中。
+7. （移交 C3）缩放百分比与「适配全部」由 C3 在 `src/ui/ZoomControls.tsx` 实现，T1 不做。
 8. 视口变化写 `setViewport`（store 负责，保存节流由 T5 处理）。
 
 ## 验收

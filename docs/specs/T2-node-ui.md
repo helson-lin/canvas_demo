@@ -1,12 +1,12 @@
-# T2 Node UI — 三种节点内容与工具栏
+# T2 Node UI — 三种节点内容
 
 - 分支：`feat/t2-node-ui` · 依赖：T0
 
 ## 拥有的文件
-`src/nodes/ImageNode.tsx`、`PromptNode.tsx`、`GeneratorNode.tsx`、`src/nodes/registry.tsx`、`src/ui/Toolbar.tsx`、`src/ui/NodeStatus.tsx`（新建）、`src/components/motion/*`（新增 beUI 组件）
+`src/nodes/ImageNode.tsx`、`PromptNode.tsx`、`GeneratorNode.tsx`、`src/nodes/registry.tsx`、`src/ui/NodeStatus.tsx`（新建）、`src/components/motion/*`（新增 beUI 组件）
 
 ## 需求
-1. Toolbar（beUI Dock + Tooltip）：新建 图片 / 提示词 / 生成 节点，放在**当前视口中心的世界坐标**（用 `screenToWorld`），多次新建错开 24px；「载入示例」按钮生成带 `示例` 标签的一组节点（不自动运行生成）。
+1. （移交 C1）工具栏由 C1 实现。节点头部对 `node.sample === true` 显示「示例」标签。
 2. ImageNode：
    - 根据 `selectImageNodeView` 渲染：`ready` 显示图片（`useAssetUrl`，T5 提供；T0 桩可先返回 sample URL）；`queued/running` 显示 beUI Loader + Animated Badge；`failed/interrupted` 显示错误原因 + 重试按钮（调用 `retryTask`）；`missing` 显示“图片缺失”占位。
    - 空图片节点：可从示例图列表选择，或本地上传（`<input type=file accept=image/*>` → 调 `assetStore.importFile(file)` 返回 assetId，T5 实现；T2 仅调用）。

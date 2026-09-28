@@ -6,6 +6,7 @@ import { DevPanel } from '@/ui/DevPanel'
 import { SaveIndicator } from '@/ui/SaveIndicator'
 import { Toaster } from '@/ui/Toaster'
 import { Toolbar } from '@/ui/Toolbar'
+import { ZoomControls } from '@/ui/ZoomControls'
 
 export default function App() {
   const hydrated = useCanvasStore((s) => s.ui.hydrated)
@@ -21,6 +22,7 @@ export default function App() {
           <Canvas />
           <Toolbar />
           <SaveIndicator />
+          <ZoomControls />
           <DevPanel />
         </>
       ) : (

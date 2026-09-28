@@ -3,7 +3,7 @@
 - 分支：`feat/t4-task-engine` · 依赖：T0 · 必读 ARCHITECTURE.md §6、§7.1
 
 ## 拥有的文件
-`src/services/mockTaskService.ts`、`src/services/taskRunner.ts`、`src/services/mockConfig.ts`、`src/ui/DevPanel.tsx`、`src/services/__tests__/*.test.ts`
+`src/services/mockTaskService.ts`、`src/services/taskRunner.ts`、`src/services/mockConfig.ts`（保持已有导出签名）、`src/services/__tests__/*.test.ts`
 
 ## 需求
 1. **MockTaskService**（实现 `TaskService`）：
@@ -21,7 +21,7 @@
    - `cancelTask(taskId)`：service.cancel + 状态 cancelled。
    - `resumeTasks()`：启动时由 T5 调用；对 queued/running 任务调用 `service.resume`，不可恢复者置 `interrupted`（错误“页面刷新导致任务中断”）。
    - 全局超时守卫：`expectedDurationMs × 3` 仍未终态 → failed `TIMEOUT`。
-3. **DevPanel**（beUI Drawer + Switch）：`下一次失败`、`全部失败`、`队列/运行时长` 滑块、任务列表（id、generator、状态、attempt、错误）。
+3. （移交 C2）DevPanel UI 由 C2 实现；T4 只需读取 `getMockConfig()`，`failNext` 消费后调用 `setMockConfig({ failNext: false })`。
 
 ## 验收（vitest + fake timers，必须）
 - 正常：queued → running → succeeded，结果节点拿到新 assetId，原图片节点 assetId 不变。
