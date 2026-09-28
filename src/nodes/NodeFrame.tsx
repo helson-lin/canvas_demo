@@ -1,7 +1,8 @@
-// OWNER: T1 — selection highlight, drag handling. T0 renders a static frame.
+// OWNER: T1 — selection highlight, drag handling.
 import type { ReactNode } from 'react'
 import type { CanvasNode } from '@/domain'
 import { cn } from '@/lib/utils'
+import { useNodeDrag } from '@/canvas/useNodeDrag'
 
 export interface NodeFrameProps {
   node: CanvasNode
@@ -13,16 +14,18 @@ export interface NodeFrameProps {
 }
 
 export function NodeFrame({ node, selected, title, children, handles }: NodeFrameProps) {
+  const dragHandlers = useNodeDrag(node.id)
   return (
     <div
       data-node-id={node.id}
+      {...dragHandlers}
       className={cn(
-        'absolute flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm',
+        'absolute flex touch-none flex-col rounded-xl border bg-card text-card-foreground shadow-sm',
         selected && 'ring-2 ring-primary',
       )}
       style={{ left: node.position.x, top: node.position.y, width: node.size.w, minHeight: node.size.h }}
     >
-      <div className="flex items-center justify-between border-b px-3 py-2 text-xs font-medium">
+      <div className="flex cursor-move items-center justify-between border-b px-3 py-2 text-xs font-medium">
         {title}
         <span className="font-mono text-[10px] text-muted-foreground">{node.id.slice(-6)}</span>
       </div>

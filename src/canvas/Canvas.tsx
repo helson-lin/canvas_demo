@@ -12,7 +12,7 @@ export function Canvas() {
   usePanZoom(containerRef)
 
   return (
-    <div ref={containerRef} className="relative h-full w-full overflow-hidden bg-muted/40 select-none">
+    <div ref={containerRef} className="relative h-full w-full touch-none overflow-hidden overscroll-none bg-muted/40 select-none">
       <div
         className="absolute left-0 top-0"
         style={{
