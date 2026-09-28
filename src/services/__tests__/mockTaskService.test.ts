@@ -62,14 +62,21 @@ describe('MockTaskService', () => {
     vi.setSystemTime(10_000)
     const s = createMockTaskService()
     const base = { ...req(), expectedDurationMs: 3300 }
-    expect(await s.resume({ ...base, taskId: 't1', queuedAt: 10_000 - 500 })).toEqual({ resumable: true })
+    expect(await s.resume({ ...base, taskId: 't1', localTaskId: 'l1', queuedAt: 10_000 - 500 })).toEqual({ resumable: true, taskId: 't1' })
     await vi.advanceTimersByTimeAsync(299)
     expect((await s.get('t1')).status).toBe('queued')
     await vi.advanceTimersByTimeAsync(1)
     expect((await s.get('t1')).status).toBe('running')
     await vi.advanceTimersByTimeAsync(2500)
     expect((await s.get('t1')).status).toBe('succeeded')
-    const old = await s.resume({ ...base, idempotencyKey: 'x', taskId: 't2', queuedAt: 10_000 - 3300 - 10_001 })
+    const old = await s.resume({ ...base, idempotencyKey: 'x', taskId: 't2', localTaskId: 'l2', queuedAt: 10_000 - 3300 - 10_001 })
     expect(old.resumable).toBe(false)
+  })
+
+  it('resume finds a task by idempotencyKey when the submit response was lost', async () => {
+    const s = createMockTaskService()
+    const { taskId } = await s.submit(req())
+    const res = await s.resume({ ...req(), localTaskId: 'local', queuedAt: Date.now(), expectedDurationMs: 3300 })
+    expect(res).toEqual({ resumable: true, taskId })
   })
 })

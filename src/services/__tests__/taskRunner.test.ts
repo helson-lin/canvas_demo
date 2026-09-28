@@ -73,6 +73,8 @@ describe('taskRunner', () => {
     const t = task(taskId)
     expect(t.status).toBe('queued')
     expect(t.expectedDurationMs).toBe(3300)
+    // The service-side id is persisted so a reload can re-attach to the same remote task.
+    expect(t.remoteTaskId).toMatch(/.+/)
     expect(t.inputSnapshot).toEqual({ imageAssetIds: ['asset_orig'], prompts: ['a cat'] })
     const ph = node(t.resultNodeId!)
     expect(ph.data).toEqual({ assetId: null, pendingTaskId: taskId })
@@ -191,7 +193,7 @@ describe('taskRunner', () => {
       submit: async () => ({ taskId: 'remote', expectedDurationMs: 3300 }),
       get: async (taskId) => ({ taskId, status: 'queued' }),
       cancel: async () => {},
-      resume: async () => ({ resumable: true }),
+      resume: async () => ({ resumable: true, taskId: 'remote' }),
     }
     useService(stuck)
     const { genId } = setup({ prompt: 'x' })

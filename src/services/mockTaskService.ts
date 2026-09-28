@@ -120,7 +120,9 @@ export function createMockTaskService(opts: MockTaskServiceOptions = {}): TaskSe
     },
 
     async resume(req: ResumeTaskRequest): Promise<ResumeTaskResponse> {
-      if (tasks.has(req.taskId)) return { resumable: true }
+      // A real backend would find the task by id, or by idempotencyKey when the submit response was lost.
+      const knownId = (req.taskId && tasks.has(req.taskId) ? req.taskId : undefined) ?? byKey.get(req.idempotencyKey)
+      if (knownId) return { resumable: true, taskId: knownId }
       const elapsed = now() - req.queuedAt
       if (elapsed > req.expectedDurationMs + RESUME_GRACE_MS) {
         return { resumable: false, reason: '任务已超过预期时长' }
@@ -128,7 +130,7 @@ export function createMockTaskService(opts: MockTaskServiceOptions = {}): TaskSe
       // Re-split the original schedule so the task finishes near its original ETA.
       const queueMs = Math.min(getMockConfig().queueMs, req.expectedDurationMs)
       const runMs = req.expectedDurationMs - queueMs
-      const t: MockTask = { taskId: req.taskId, req, status: 'queued', queuedAt: req.queuedAt, timers: [] }
+      const t: MockTask = { taskId: req.taskId ?? `remote_${req.localTaskId}`, req, status: 'queued', queuedAt: req.queuedAt, timers: [] }
       let queueLeft = queueMs - elapsed
       let runLeft = runMs
       if (req.startedAt !== undefined) {
@@ -141,7 +143,7 @@ export function createMockTaskService(opts: MockTaskServiceOptions = {}): TaskSe
       byKey.set(req.idempotencyKey, t.taskId)
       // failNext was already consumed by the original submit; don't consume it again.
       schedule(t, queueLeft, runLeft, decideFailure(req, false))
-      return { resumable: true }
+      return { resumable: true, taskId: t.taskId }
     },
   }
 }

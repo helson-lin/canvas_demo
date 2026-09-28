@@ -163,9 +163,8 @@ async function submitTask(task: Task): Promise<void> {
       inputs: task.inputSnapshot,
       params: task.params,
     })
-    if (res.expectedDurationMs !== task.expectedDurationMs) {
-      store().patchTask(task.id, { expectedDurationMs: res.expectedDurationMs })
-    }
+    store().patchTask(task.id, { remoteTaskId: res.taskId, expectedDurationMs: res.expectedDurationMs })
+    void save()
     track(task.id, res.taskId)
   } catch (err) {
     const code = (err as { code?: unknown }).code
@@ -358,9 +357,11 @@ export async function resumeTasks(): Promise<void> {
   const pending = Object.values(doc().tasks).filter((t) => isTaskActive(t) && !trackers.has(t.id))
   for (const task of pending) {
     let resumable = false
+    let remoteId = task.remoteTaskId ?? task.id
     try {
       const res = await deps.service.resume({
-        taskId: task.id,
+        taskId: task.remoteTaskId,
+        localTaskId: task.id,
         idempotencyKey: task.idempotencyKey,
         generatorNodeId: task.generatorNodeId,
         inputs: task.inputSnapshot,
@@ -370,11 +371,13 @@ export async function resumeTasks(): Promise<void> {
         expectedDurationMs: task.expectedDurationMs,
       })
       resumable = res.resumable
+      if (res.resumable) remoteId = res.taskId
     } catch {
       resumable = false
     }
     if (resumable) {
-      track(task.id, task.id)
+      if (remoteId !== task.remoteTaskId) store().patchTask(task.id, { remoteTaskId: remoteId })
+      track(task.id, remoteId)
     } else {
       store().patchTask(task.id, {
         status: 'interrupted',

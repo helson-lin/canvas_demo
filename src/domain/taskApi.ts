@@ -23,13 +23,15 @@ export interface TaskStatusResponse {
 }
 
 export interface ResumeTaskRequest extends SubmitTaskRequest {
-  taskId: string
+  /** Service-side id if known; otherwise the service must look the task up by idempotencyKey. */
+  taskId?: string
+  localTaskId: string
   queuedAt: number
   startedAt?: number
   expectedDurationMs: number
 }
 
-export type ResumeTaskResponse = { resumable: true } | { resumable: false; reason: string }
+export type ResumeTaskResponse = { resumable: true; taskId: string } | { resumable: false; reason: string }
 
 export interface TaskService {
   submit(req: SubmitTaskRequest): Promise<SubmitTaskResponse>

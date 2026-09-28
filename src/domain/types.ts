@@ -97,6 +97,8 @@ export interface Task {
   /** Previous attempt this task retries, if any. */
   retryOf?: string
   idempotencyKey: string
+  /** Id assigned by the task service; absent if the submit response never arrived (resume falls back to idempotencyKey). */
+  remoteTaskId?: string
   queuedAt: number
   startedAt?: number
   expectedDurationMs: number
