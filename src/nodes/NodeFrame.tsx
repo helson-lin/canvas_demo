@@ -1,0 +1,33 @@
+// OWNER: T1 — selection highlight, drag handling. T0 renders a static frame.
+import type { ReactNode } from 'react'
+import type { CanvasNode } from '@/domain'
+import { cn } from '@/lib/utils'
+
+export interface NodeFrameProps {
+  node: CanvasNode
+  selected: boolean
+  title: ReactNode
+  children: ReactNode
+  /** Connection handles rendered by T3. */
+  handles?: ReactNode
+}
+
+export function NodeFrame({ node, selected, title, children, handles }: NodeFrameProps) {
+  return (
+    <div
+      data-node-id={node.id}
+      className={cn(
+        'absolute flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm',
+        selected && 'ring-2 ring-primary',
+      )}
+      style={{ left: node.position.x, top: node.position.y, width: node.size.w, minHeight: node.size.h }}
+    >
+      <div className="flex items-center justify-between border-b px-3 py-2 text-xs font-medium">
+        {title}
+        <span className="font-mono text-[10px] text-muted-foreground">{node.id.slice(-6)}</span>
+      </div>
+      <div className="flex-1 p-3">{children}</div>
+      {handles}
+    </div>
+  )
+}

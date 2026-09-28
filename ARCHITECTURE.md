@@ -6,9 +6,9 @@
 
 | 领域 | 选择 | 理由 |
 | --- | --- | --- |
-| 构建 | Vite + React 18 + TypeScript | 启动快，一条命令 `pnpm dev` |
-| 状态 | Zustand（+ `immer` 中间件） | 单一 store、选择器订阅、易于持久化与测试 |
-| UI 组件 | **beUI**（https://beui.dev，React + Tailwind CSS v4 + Motion，通过 shadcn CLI 拷贝源码到 `src/components/ui/`） | 用户指定；源码进仓库，可改可解释 |
+| 构建 | Vite + React 19 + TypeScript | 启动快，一条命令 `pnpm dev` |
+| 状态 | Zustand 5（+ `immer` 中间件） | 单一 store、选择器订阅、易于持久化与测试 |
+| UI 组件 | **beUI**（https://beui.dev，React + Tailwind CSS v4 + Motion，通过 `npx shadcn@latest add @beui/<name>` 拷贝源码到 `src/components/motion/`） | 用户指定；源码进仓库，可改可解释 |
 | 画布 | **自研**（DOM 节点 + SVG 连线 + CSS transform） | 评分 30% 在坐标换算，自研能完整解释；避免 React Flow 把核心逻辑黑盒化 |
 | 持久化 | IndexedDB（`idb-keyval`） | 文档 JSON + 上传图片 Blob 都能存；localStorage 5MB 不够放图片 |
 | ID | `nanoid` | 稳定、可读前缀：`node_xxx` / `edge_xxx` / `asset_xxx` / `task_xxx` |
@@ -38,7 +38,7 @@
 ## 3. 数据模型
 
 ```ts
-// src/model/types.ts
+// src/domain/types.ts
 export const SCHEMA_VERSION = 1;
 
 type Vec2 = { x: number; y: number };           // 世界坐标
@@ -217,20 +217,23 @@ idle ──submit──▶ queued ──▶ running ──▶ succeeded ──(�
 
 - 初始状态：空画布；工具栏提供「载入示例」按钮，示例节点带 `示例` 标记。
 
-## 8. 目录结构
+## 8. 目录结构（单包，domain 层可抽离）
 
 ```
 src/
-  model/        types.ts, ids.ts, migrations.ts, selectors.ts, graph.ts(canConnect/删除级联)
-  store/        canvasStore.ts (document + actions), uiStore.ts
-  canvas/       coords.ts, Canvas.tsx(viewport/事件), EdgeLayer.tsx, useDrag.ts, usePanZoom.ts
-  nodes/        ImageNode.tsx, PromptNode.tsx, GeneratorNode.tsx, NodeFrame.tsx(选中/拖动/把手)
-  services/     taskService.ts(接口), mockTaskService.ts, taskRunner.ts(轮询→store), assetStore.ts
-  persistence/  db.ts, persist.ts(debounce 保存/加载/恢复)
-  ui/           Toolbar.tsx, DevPanel.tsx(失败开关), Toast.tsx
-  __tests__/    coords.test.ts, graph.test.ts, taskRunner.test.ts, migrations.test.ts
-public/samples/ 示例图片
+  domain/       纯 TS（禁止依赖 React/DOM/store/存储）：types.ts, ids.ts, graph.ts, selectors.ts,
+                migrations.ts, taskApi.ts(TaskService 接口 + DTO), samples.ts
+  store/        canvasStore.ts（document + ui + actions，含级联删除、transact）
+  canvas/       coords.ts, Canvas.tsx, usePanZoom.ts, useNodeDrag.ts, EdgeLayer.tsx, Handle.tsx, useConnect.ts
+  nodes/        NodeFrame.tsx, ImageNode.tsx, PromptNode.tsx, GeneratorNode.tsx, registry.tsx
+  services/     mockTaskService.ts, mockConfig.ts, taskRunner.ts, assetStore.ts
+  persistence/  api.ts(PersistenceAdapter), db.ts, persist.ts
+  ui/           Toolbar.tsx, DevPanel.tsx, Toaster.tsx + toast.ts, SaveIndicator.tsx
+  components/motion/  beUI 源码
+public/samples/ 示例图与 mock 输出图
 ```
+
+**为什么不用 monorepo**：需求是单一画布、后端不在本题范围，workspace 配置的成本大于收益。`src/domain` 被约束为纯 TS（有单测守卫），后续对接后端时可原样移动为 `packages/shared`，前后端共享类型、`TaskService` 契约、`canConnect` 校验与迁移逻辑。
 
 ## 9. 实施顺序（约 95 分钟）
 

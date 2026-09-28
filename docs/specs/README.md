@@ -24,15 +24,15 @@ T6 integration + README (T1–T5 合入后)  feat/t6-integration
 | T5 | `feat/t5-persistence` | [T5](T5-persistence.md) | T0 | 是 |
 | T6 | `feat/t6-integration` | [T6](T6-integration.md) | T1–T5 | 否 |
 
-## 并行规则（所有子任务必须遵守）
+## 并行规则（所有子任务必须遵守，完整约束见 [AGENTS.md](../../AGENTS.md)）
 
-1. **文件所有权**：每个规格列出“拥有的文件”。只能修改自己拥有的文件；需要改动共享文件（`src/model/types.ts`、`src/store/canvasStore.ts`、`src/App.tsx`）时，**不要直接改**，在 handoff 的「契约变更请求」中写明，由 reviewer 统一合入。
+1. **文件所有权**：每个规格列出“拥有的文件”。只能修改自己拥有的文件；需要改动共享文件（见 AGENTS.md §4 共享契约文件）时，**不要直接改**，在 handoff 的「契约变更请求」中写明，由 reviewer 统一合入。
 2. T0 已在共享文件中放好所有接口与桩（stub），子任务只需"填实现"。桩文件被标注 `// OWNER: Tn`，归该任务所有。
 3. 从 `main`（含 T0）切分支；提交前 `git rebase main`。
 4. 每个任务结束必须通过：`pnpm typecheck && pnpm test && pnpm build`。
 5. 交付：推分支 + 按 [handoff 模板](../handoff/TEMPLATE.md) 写 `docs/handoff/Tn.md`（放在自己分支里）。
 6. 不引入规格之外的新依赖；确需时写进 handoff 说明理由。
-7. UI 控件一律用 beUI（`npx shadcn@latest add https://beui.dev/r/<slug>.json`），组件放 `src/components/ui/`。画布平移/缩放/拖动/连线不用任何组件库。
+7. UI 控件一律用 beUI（`npx shadcn@latest add -y @beui/<name>`），组件放 `src/components/motion/`。画布平移/缩放/拖动/连线不用任何组件库。
 
 ## 合并顺序（reviewer 执行）
 

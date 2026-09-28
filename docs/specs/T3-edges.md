@@ -3,7 +3,7 @@
 - 分支：`feat/t3-edges` · 依赖：T0
 
 ## 拥有的文件
-`src/model/graph.ts`、`src/model/__tests__/graph.test.ts`、`src/canvas/EdgeLayer.tsx`、`src/canvas/Handle.tsx`、`src/canvas/useConnect.ts`
+`src/domain/graph.ts`、`src/domain/__tests__/graph.test.ts`、`src/canvas/EdgeLayer.tsx`、`src/canvas/Handle.tsx`、`src/canvas/useConnect.ts`
 
 ## 需求
 1. `graph.ts`：

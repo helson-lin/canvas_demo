@@ -15,7 +15,7 @@
 2. **taskRunner**：
    - `startGeneration(genId)`：若 `selectActiveTask` 为 queued/running → toast 并返回；构造 `inputSnapshot`（assetIds + prompts）、params；**在一个 store 动作中**创建 Task(queued) + 占位 ImageNode（generator 右侧 +40px，`pendingTaskId`）+ `result` 边 + `generator.data.activeTaskId`；随后调用 `persistence.saveNow()`（T5；未合入时为桩）；再 `service.submit`。
    - 轮询 `get()` 每 500ms，状态变化时 `patchTask` 并 `saveNow()`。
-   - 成功：`assetStore.persistRemote(url)`（T5：fetch → Blob → putBlob，返回 assetId）**完成后**，一次动作内：写 Asset(generated, origin.taskId)、占位节点 `assetId`、清 `pendingTaskId`、task succeeded、`resultAssetId`；若占位节点已被删除或任务已 cancelled → 丢弃结果。
+   - 成功：`assetStore.persistRemote(url, taskId)`（T5：fetch → Blob → putBlob，返回 assetId）**完成后**，一次动作内：写 Asset(generated, origin.taskId)、占位节点 `assetId`、清 `pendingTaskId`、task succeeded、`resultAssetId`；若占位节点已被删除或任务已 cancelled → 丢弃结果。
    - 失败：patch error，保留 inputSnapshot/params。
    - `retryTask(taskId)`：新 Task（attempt+1、新 idempotencyKey、同 inputSnapshot/params、同 resultNodeId），占位节点 `pendingTaskId` 指向新任务，旧任务保留。
    - `cancelTask(taskId)`：service.cancel + 状态 cancelled。

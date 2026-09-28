@@ -3,7 +3,7 @@
 - 分支：`feat/t2-node-ui` · 依赖：T0
 
 ## 拥有的文件
-`src/nodes/ImageNode.tsx`、`PromptNode.tsx`、`GeneratorNode.tsx`、`src/nodes/registry.tsx`、`src/ui/Toolbar.tsx`、`src/ui/NodeStatus.tsx`（新建）、`src/components/ui/*`（新增 beUI 组件）
+`src/nodes/ImageNode.tsx`、`PromptNode.tsx`、`GeneratorNode.tsx`、`src/nodes/registry.tsx`、`src/ui/Toolbar.tsx`、`src/ui/NodeStatus.tsx`（新建）、`src/components/motion/*`（新增 beUI 组件）
 
 ## 需求
 1. Toolbar（beUI Dock + Tooltip）：新建 图片 / 提示词 / 生成 节点，放在**当前视口中心的世界坐标**（用 `screenToWorld`），多次新建错开 24px；「载入示例」按钮生成带 `示例` 标签的一组节点（不自动运行生成）。
