@@ -16,8 +16,8 @@ T0 foundation ✅ (已合入 main)
  ├─ C1 toolbar           feat/c1-toolbar       Codex ✅
  ├─ C2 devpanel          (main)                reviewer ✅
  └─ C3 status-ui         (main)                reviewer ✅
-C4 README + AI 记录 (功能合入后)  feat/c4-docs   Codex
-T6 集成验收 (reviewer)            feat/t6-integration
+C4 README + AI 记录              (main)        reviewer ✅
+T6 集成验收                     (main)        reviewer ✅
 ```
 
 | ID | 规格 | 执行者 | 依赖 |
@@ -31,8 +31,8 @@ T6 集成验收 (reviewer)            feat/t6-integration
 | C1 ✅ | [C1](C1-toolbar.md) | Codex | T0 |
 | C2 ✅ | [C2](C2-devpanel.md) | reviewer | T0 |
 | C3 ✅ | [C3](C3-status-ui.md) | reviewer | T0 |
-| C4 | [C4](C4-docs.md) | Codex | 全部 |
-| T6 | [T6](T6-integration.md) | reviewer | 全部 |
+| C4 ✅ | [C4](C4-docs.md) | reviewer | 全部 |
+| T6 ✅ | [T6](T6-integration.md) | reviewer | 全部 |
 
 ## 并行规则（所有子任务必须遵守，完整约束见 [AGENTS.md](../../AGENTS.md)）
 

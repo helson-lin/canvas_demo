@@ -80,6 +80,7 @@ interface Task {
   attempt: number;
   queuedAt: number; startedAt?: number; expectedDurationMs: number; // 刷新后按剩余时长恢复
   idempotencyKey: string;                        // 为后端化预留
+  remoteTaskId?: string;                         // 服务端任务 ID，刷新后优先按它对账
   createdAt: number; updatedAt: number;
 }
 
@@ -248,6 +249,6 @@ public/samples/ 示例图与 mock 输出图
 
 ## 10. 后端化预案（追问准备）
 - **接口**：`POST /tasks`（Header `Idempotency-Key`，body: generatorNodeId, inputs(assetIds, prompt), params）→ `202 {taskId}`；`GET /tasks/:id`；`POST /tasks/:id/cancel`；`POST /tasks/:id/retry`（新建 attempt，关联原任务）。
-- **超时但服务端可能已接收**：客户端在提交前生成并持久化 `idempotencyKey`；超时后用同 key 重发，服务端唯一索引 `(user_id, idempotency_key)` 返回已存在任务；或 `GET /tasks?idempotencyKey=` 对账。刷新后对 `interrupted` 任务先查询再决定是否重试，而非直接降级。
+- **超时但服务端可能已接收**：客户端在提交前生成并持久化 `idempotencyKey`；超时后用同 key 重发，服务端唯一索引 `(user_id, idempotency_key)` 返回已存在任务；或 `GET /tasks?idempotencyKey=` 对账。前端将服务端返回的 ID 存为 `Task.remoteTaskId`；刷新后 `resume` 先按 `remoteTaskId`、缺失时按 `idempotencyKey` 查询，再决定继续轮询或转中断（mock 已按此实现）。
 - **资源与节点**：图片上传走对象存储（预签名 URL），`assets` 表存元数据与引用；画布文档只存 `assetId`。删除节点不删资产，资产按引用计数/定期 GC 删除（生成结果与任务记录关联，保留审计）。
 - **文档保存**：画布文档带 `version`（schema）+ `revision`（乐观锁），冲突时 409。
