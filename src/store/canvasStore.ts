@@ -29,6 +29,8 @@ export interface CanvasState {
   addNode: (type: NodeType, position: Vec2, opts?: { sample?: boolean; data?: Partial<CanvasNode['data']> }) => string
   updateNodeData: <T extends CanvasNode>(id: string, patch: Partial<T['data']>) => void
   moveNode: (id: string, position: Vec2) => void
+  /** Records the rendered size (height follows content); keeps handles, edges and fit-all accurate. */
+  setNodeSize: (id: string, size: { w: number; h: number }) => void
   /** Removes nodes, cascades their edges, cancels their active tasks. */
   removeNodes: (ids: string[]) => void
   /** Returns the new edge id, or null when `canConnect` rejects. */
@@ -88,6 +90,12 @@ export const useCanvasStore = create<CanvasState>()(
       set((s) => {
         const node = s.doc.nodes[id]
         if (node) node.position = { ...position }
+      }),
+
+    setNodeSize: (id, size) =>
+      set((s) => {
+        const node = s.doc.nodes[id]
+        if (node && (node.size.w !== size.w || node.size.h !== size.h)) node.size = { ...size }
       }),
 
     removeNodes: (ids) =>

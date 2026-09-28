@@ -107,7 +107,7 @@ function ResultImage({ task, url }: { task: Task; url: string | null }) {
   const testId = status === 'complete' ? 'image-result' : isError ? 'image-failed' : 'image-pending'
   const canOpen = status === 'complete' && !!url
   return (
-    <div data-testid={testId} data-status={status} className="flex h-full flex-col">
+    <div data-testid={testId} data-status={status} className="flex flex-col">
       <div
         onDoubleClick={canOpen ? () => setOpen(true) : undefined}
         title={canOpen ? '双击查看大图' : undefined}
@@ -124,7 +124,7 @@ function ResultImage({ task, url }: { task: Task; url: string | null }) {
           {url ? <img src={url} alt={prompt || '生成结果'} draggable={false} className="size-full object-cover" /> : null}
         </ImageGeneration>
       </div>
-      <div className="flex min-h-0 flex-1 items-center gap-2 px-1.5 pt-1.5">
+      <div className="flex items-center gap-2 px-1.5 pb-0.5 pt-1.5">
         <div className="min-w-0 flex-1" aria-live="polite">
           <p
             className={cn(
@@ -170,24 +170,24 @@ function ImageNodeView({ node }: { node: ImageNodeModel }) {
   if (generationTask && (view !== 'missing' || pendingTask)) {
     body = <ResultImage task={generationTask} url={url} />
   } else if (view === 'ready' && url) {
-    body = <img src={url} alt="图片" draggable={false} className="h-full w-full rounded-lg object-contain" />
+    body = <img src={url} alt="图片" draggable={false} className="block h-auto w-full rounded-lg" />
   } else if (view === 'ready') {
     // Blob-backed assets resolve asynchronously after a reload; don't flash the "missing" picker meanwhile.
     body = (
-      <div className="flex h-full items-center justify-center" data-testid="image-loading">
+      <div className="flex aspect-square items-center justify-center" data-testid="image-loading">
         <Loader variant="dots" label="加载图片" />
       </div>
     )
   } else if ((view === 'queued' || view === 'running') && pendingTask) {
     body = (
-      <div className="flex h-full flex-col items-center justify-center gap-3" data-testid="image-pending">
+      <div className="flex flex-col items-center justify-center gap-3 py-8" data-testid="image-pending">
         <Loader variant="dots" label={view === 'queued' ? '排队中' : '生成中'} />
         <NodeStatus status={pendingTask.status} />
       </div>
     )
   } else if (view === 'failed' && pendingTask) {
     body = (
-      <div className="flex h-full flex-col items-center justify-center gap-2 text-center" data-testid="image-failed">
+      <div className="flex flex-col items-center justify-center gap-2 py-6 text-center" data-testid="image-failed">
         <NodeStatus status={pendingTask.status} />
         <p className="line-clamp-3 text-xs text-destructive">{pendingTask.error?.message ?? '任务未完成'}</p>
         <Button data-no-drag size="sm" variant="secondary" onClick={() => retryTask(pendingTask.id)}>
@@ -198,7 +198,7 @@ function ImageNodeView({ node }: { node: ImageNodeModel }) {
     )
   } else {
     body = (
-      <div className="flex h-full flex-col items-center justify-center gap-2" data-testid="image-missing">
+      <div className="flex flex-col items-center justify-center gap-2 py-4" data-testid="image-missing">
         <ImageIcon className="h-6 w-6 text-muted-foreground" />
         <p className="text-xs text-muted-foreground">图片缺失</p>
         <div className="flex gap-1" data-no-drag>

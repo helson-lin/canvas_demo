@@ -72,3 +72,14 @@ describe('canvasStore', () => {
     expect(s().doc.tasks[done.id]?.status).toBe('succeeded')
   })
 })
+
+describe('setNodeSize', () => {
+  it('records the measured size and skips no-op writes', () => {
+    const id = s().addNode('generator', { x: 0, y: 0 })
+    s().setNodeSize(id, { w: 300, h: 312 })
+    expect(s().doc.nodes[id]?.size).toEqual({ w: 300, h: 312 })
+    const before = s().doc
+    s().setNodeSize(id, { w: 300, h: 312 })
+    expect(s().doc).toBe(before)
+  })
+})

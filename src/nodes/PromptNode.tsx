@@ -19,7 +19,7 @@ function PromptNodeView({ node }: { node: PromptNodeModel }) {
       selected={selected}
       title={<NodeTitle icon={<Type className="h-3.5 w-3.5" />} label="提示词" sample={node.sample} />}
     >
-      <div className="flex h-full flex-col gap-1">
+      <div className="flex flex-col gap-1">
         <textarea
           data-no-drag
           aria-label="提示词"

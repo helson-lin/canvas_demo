@@ -117,10 +117,11 @@ export interface CanvasDocument {
 
 export type ImageNodeView = 'ready' | 'queued' | 'running' | 'failed' | 'missing'
 
+/** Initial estimates only — NodeFrame measures the rendered height and writes it back to node.size. */
 export const DEFAULT_NODE_SIZE: Record<NodeType, { w: number; h: number }> = {
-  image: { w: 240, h: 240 },
+  image: { w: 240, h: 280 },
   prompt: { w: 260, h: 180 },
-  generator: { w: 300, h: 420 },
+  generator: { w: 300, h: 360 },
 }
 
 export function createEmptyDocument(): CanvasDocument {
