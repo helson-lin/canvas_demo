@@ -5,6 +5,8 @@ import { Button } from '@/components/motion/button/base'
 import { Drawer } from '@/components/motion/drawer'
 import { Switch } from '@/components/motion/switch'
 import { getMockConfig, setMockConfig, subscribeMockConfig, type MockConfig } from '@/services/mockConfig'
+import { revealNode } from '@/canvas/reveal'
+import type { Task } from '@/domain'
 import { useCanvasStore } from '@/store/canvasStore'
 import { NodeStatus } from '@/ui/NodeStatus'
 
@@ -39,25 +41,46 @@ function DurationField({ label, field, config }: { label: string; field: 'queueM
   )
 }
 
-function TaskList() {
+function TaskList({ onLocate }: { onLocate: (nodeId: string) => void }) {
   const tasks = useCanvasStore((s) => s.doc.tasks)
+  const nodes = useCanvasStore((s) => s.doc.nodes)
   const list = Object.values(tasks).sort((a, b) => b.createdAt - a.createdAt)
   if (list.length === 0) return <p className="text-xs text-muted-foreground">暂无任务</p>
   return (
     <ul className="flex flex-col gap-2" data-testid="task-list">
       {list.map((t) => (
-        <li key={t.id} className="rounded-lg border p-2 text-xs" data-testid="task-row">
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-mono">{t.id.slice(-6)}</span>
-            <NodeStatus status={t.status} />
-          </div>
-          <div className="mt-1 text-muted-foreground">
-            生成节点 <span className="font-mono">{t.generatorNodeId.slice(-6)}</span> · 第 {t.attempt} 次 · {t.params.aspectRatio}
-          </div>
-          {t.error && <p className="mt-1 text-destructive">{t.error.message}</p>}
+        <li key={t.id} data-testid="task-row">
+          <TaskRowBody task={t} locatable={!!(t.resultNodeId && nodes[t.resultNodeId])} onLocate={onLocate} />
         </li>
       ))}
     </ul>
+  )
+}
+
+function TaskRowBody({ task: t, locatable, onLocate }: { task: Task; locatable: boolean; onLocate: (nodeId: string) => void }) {
+  const body = (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono">{t.id.slice(-6)}</span>
+        <NodeStatus status={t.status} />
+      </div>
+      <div className="mt-1 text-muted-foreground">
+        生成节点 <span className="font-mono">{t.generatorNodeId.slice(-6)}</span> · 第 {t.attempt} 次 · {t.params.aspectRatio}
+      </div>
+      {t.inputSnapshot.prompts.length > 0 && <p className="mt-1 truncate text-foreground">{t.inputSnapshot.prompts.join('，')}</p>}
+      {t.error && <p className="mt-1 text-destructive">{t.error.message}</p>}
+    </>
+  )
+  if (!locatable) return <div className="rounded-lg border p-2 text-xs opacity-80">{body}</div>
+  return (
+    <button
+      type="button"
+      title="定位到结果节点"
+      onClick={() => onLocate(t.resultNodeId!)}
+      className="w-full rounded-lg border p-2 text-left text-xs transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {body}
+    </button>
   )
 }
 
@@ -68,9 +91,10 @@ export function DevPanel() {
   return (
     <>
       <div className="absolute right-3 top-3 z-10" data-no-drag>
-        <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
-          <FlaskConical className="h-3.5 w-3.5" />
-          Mock 控制台
+        <Button size="sm" variant="secondary" onClick={() => setOpen(true)} aria-label="Mock 控制台" title="Mock 控制台">
+          <FlaskConical className="h-3.5 w-3.5" aria-hidden />
+          {/* Icon-only below lg so it never collides with the centred toolbar. */}
+          <span className="hidden lg:inline">Mock 控制台</span>
         </Button>
       </div>
       <Drawer open={open} onOpenChange={setOpen} side="right" ariaLabel="Mock 控制台">
@@ -93,8 +117,14 @@ export function DevPanel() {
             <DurationField label="生成时长" field="runMs" config={config} />
           </section>
           <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">任务列表</h3>
-            <TaskList />
+            <h3 className="text-sm font-medium">任务历史</h3>
+            <p className="-mt-1 text-xs text-muted-foreground">点击任务定位到对应的结果节点</p>
+            <TaskList
+              onLocate={(nodeId) => {
+                setOpen(false)
+                revealNode(nodeId, { select: true })
+              }}
+            />
           </section>
         </div>
       </Drawer>

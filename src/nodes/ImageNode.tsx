@@ -23,10 +23,12 @@ import { sameNodeContent } from './memo'
 import { NodeFrame } from './NodeFrame'
 import { ResultLightbox } from './ResultLightbox'
 import { cn } from '@/lib/utils'
+import { checkpoint } from '@/store/history'
 
 // TODO(contract): should move into assetStore as an atomic `useSampleImage` (see handoff T2).
 function pickSample(nodeId: string, sample: SampleImage) {
   const assetId = newId('asset')
+  checkpoint()
   useCanvasStore.getState().transact((doc) => {
     const node = doc.nodes[nodeId]
     if (!node || node.type !== 'image') return
@@ -46,6 +48,7 @@ function pickSample(nodeId: string, sample: SampleImage) {
 async function uploadFile(nodeId: string, file: File) {
   try {
     const assetId = await importFile(file)
+    checkpoint()
     useCanvasStore.getState().updateNodeData<ImageNodeModel>(nodeId, { assetId })
     void persistence.saveNow()
   } catch (err) {

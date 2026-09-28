@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Canvas } from '@/canvas/Canvas'
 import { gcBlobs } from '@/services/assetStore'
+import { clearHistory } from '@/store/history'
 import { initPersistence } from '@/persistence/persist'
 import { useCanvasStore } from '@/store/canvasStore'
 import { CanvasHint } from '@/ui/CanvasHint'
@@ -16,6 +17,7 @@ export default function App() {
 
   useEffect(() => {
     void initPersistence().then(() => {
+      clearHistory()
       // Reclaim blobs no asset references (e.g. a result dropped mid-write) once the canvas is idle.
       const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 2000))
       idle(() => void gcBlobs().catch(() => undefined))

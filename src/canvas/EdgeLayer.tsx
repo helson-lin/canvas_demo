@@ -4,6 +4,7 @@ import { bezierMidpoint, bezierPath, edgeEndpoints, handlePoint, type Edge } fro
 import { persistence } from '@/persistence/persist'
 import { useCanvasStore } from '@/store/canvasStore'
 import { useConnectPreview } from './useConnect'
+import { checkpoint } from '@/store/history'
 
 /** Render as the first child of the world (transformed) container. Coordinates are world units. */
 export function EdgeLayer() {
@@ -64,6 +65,7 @@ function EdgePath(props: {
   const { edge, d, mid, zoom, selected, hovered } = props
   if (!d || !mid) return null
   const remove = () => {
+    checkpoint()
     useCanvasStore.getState().removeEdges([edge.id])
     void persistence.saveNow()
   }

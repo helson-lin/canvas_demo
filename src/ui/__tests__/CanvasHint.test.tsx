@@ -21,6 +21,6 @@ describe('CanvasHint', () => {
     render(<CanvasHint />)
     expect(screen.queryByText('从一张空白画布开始')).toBeNull()
     const list = screen.getByRole('list', { name: '画布操作' })
-    for (const label of ['平移', '缩放', '连线', '删除']) expect(list.textContent).toContain(label)
+    for (const label of ['平移', '缩放', '连线', '框选', '撤销', '删除']) expect(list.textContent).toContain(label)
   })
 })

@@ -4,6 +4,7 @@ import type { Vec2 } from '@/domain'
 import { useCanvasStore } from '@/store/canvasStore'
 import { persistence } from '@/persistence/persist'
 import { isSpacePanActive } from './usePanZoom'
+import { checkpoint } from '@/store/history'
 
 export const DRAG_THRESHOLD = 3
 export const NO_DRAG_SELECTOR = '[data-no-drag], input, textarea, button, select'
@@ -92,6 +93,7 @@ export function useNodeDrag(nodeId: string) {
       if (!d.moved) {
         if (!exceedsDragThreshold(d.startScreen, p)) return
         d.moved = true
+        checkpoint()
         const state = useCanvasStore.getState()
         if (!state.ui.selection.nodeIds.includes(nodeId)) state.select({ nodeIds: [nodeId] })
       }

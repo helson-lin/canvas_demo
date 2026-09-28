@@ -7,6 +7,7 @@ import { useCanvasStore } from '@/store/canvasStore'
 import { NodeTitle } from '@/ui/NodeStatus'
 import { sameNodeContent } from './memo'
 import { NodeFrame } from './NodeFrame'
+import { checkpoint } from '@/store/history'
 
 function PromptNodeView({ node }: { node: PromptNodeModel }) {
   const selected = useCanvasStore((s) => s.ui.selection.nodeIds.includes(node.id))
@@ -27,6 +28,7 @@ function PromptNodeView({ node }: { node: PromptNodeModel }) {
           placeholder="描述你想生成的画面…（包含 #fail 可模拟失败）"
           value={text}
           onChange={(e) => {
+            checkpoint(`text:${node.id}`)
             updateNodeData<PromptNodeModel>(node.id, { text: e.target.value })
             persistence.scheduleSave()
           }}

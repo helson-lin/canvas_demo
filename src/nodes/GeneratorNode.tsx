@@ -21,6 +21,7 @@ import { NodeStatus, NodeTitle } from '@/ui/NodeStatus'
 import { toast } from '@/ui/toast'
 import { sameNodeContent } from './memo'
 import { NodeFrame } from './NodeFrame'
+import { checkpoint } from '@/store/history'
 
 const RATIOS: AspectRatio[] = ['1:1', '16:9', '9:16']
 
@@ -117,6 +118,7 @@ function GeneratorNodeView({ node }: { node: GeneratorNodeModel }) {
             value={ratio}
             variant="segment"
             onValueChange={(v) => {
+              checkpoint()
               updateNodeData<GeneratorNodeModel>(node.id, { params: { ...node.data.params, aspectRatio: v as AspectRatio } })
               persistence.scheduleSave()
             }}

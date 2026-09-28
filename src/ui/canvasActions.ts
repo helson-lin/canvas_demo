@@ -4,6 +4,7 @@ import { DEFAULT_NODE_SIZE, findFreePosition, newId, SAMPLE_IMAGES, type NodeTyp
 import { persistence } from '@/persistence/persist'
 import { useCanvasStore } from '@/store/canvasStore'
 import { toast } from '@/ui/toast'
+import { checkpoint } from '@/store/history'
 
 function viewportCenter(viewport: Viewport): Vec2 {
   return screenToWorld({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, viewport)
@@ -26,6 +27,7 @@ function saveDocument(): void {
 
 export function createNode(type: NodeType): void {
   const store = useCanvasStore.getState()
+  checkpoint()
   const id = store.addNode(type, nextNodePosition(type))
   store.select({ nodeIds: [id] })
   saveDocument()
@@ -35,6 +37,7 @@ export function loadSample(): void {
   const store = useCanvasStore.getState()
   const center = viewportCenter(store.doc.viewport)
   const image = SAMPLE_IMAGES[0]
+  checkpoint()
   const assetId = newId('asset')
 
   store.upsertAsset({

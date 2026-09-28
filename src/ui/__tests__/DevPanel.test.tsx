@@ -46,4 +46,17 @@ describe('DevPanel', () => {
     expect(within(rows[0]).getByText('Mock 强制失败')).toBeTruthy()
     expect(within(rows[1]).getByText('old001')).toBeTruthy()
   })
+
+  it('task history rows locate their result node', () => {
+    const doc = createEmptyDocument()
+    doc.nodes.node_res001 = { id: 'node_res001', type: 'image', position: { x: 0, y: 0 }, size: { w: 240, h: 280 }, createdAt: 0, data: { assetId: null } }
+    doc.tasks.task_a00001 = task('task_a00001', 1, { resultNodeId: 'node_res001' })
+    doc.tasks.task_b00002 = task('task_b00002', 2, { resultNodeId: 'node_gone00' })
+    useCanvasStore.getState().replaceDoc(doc)
+    render(<DevPanel />)
+    fireEvent.click(screen.getByText('Mock 控制台'))
+    fireEvent.click(screen.getByTitle('定位到结果节点'))
+    expect(useCanvasStore.getState().ui.selection.nodeIds).toEqual(['node_res001'])
+    expect(screen.getAllByTitle('定位到结果节点')).toHaveLength(1)
+  })
 })

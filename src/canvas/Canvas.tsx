@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { useCanvasStore } from '@/store/canvasStore'
 import { renderNode } from '@/nodes/registry'
 import { EdgeLayer } from './EdgeLayer'
+import { useMarquee } from './marquee'
 import { usePanZoom } from './usePanZoom'
 
 export function Canvas() {
@@ -23,6 +24,19 @@ export function Canvas() {
         <EdgeLayer />
         {Object.values(nodes).map(renderNode)}
       </div>
+      <MarqueeOverlay />
     </div>
+  )
+}
+
+function MarqueeOverlay() {
+  const rect = useMarquee()
+  if (!rect) return null
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute rounded-sm border border-primary/60 bg-primary/5"
+      style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
+    />
   )
 }

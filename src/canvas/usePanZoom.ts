@@ -2,9 +2,19 @@
 import { useEffect, type RefObject } from 'react'
 import { useCanvasStore } from '@/store/canvasStore'
 import { persistence } from '@/persistence/persist'
-import { zoomAt } from './coords'
-import { summarizeNodeRemoval } from '@/domain'
+import { screenToWorld, zoomAt } from './coords'
+import { copySelection, duplicateSelection, nudgeSelection, pasteClipboard, selectAll } from './editing'
+import { nodesInRect, rectFromPoints, setMarquee } from './marquee'
+import { checkpoint, redo, undo } from '@/store/history'
+import { summarizeNodeRemoval, type Vec2 } from '@/domain'
 import { confirm, isConfirmOpen } from '@/ui/confirm'
+
+const ARROWS: Record<string, Vec2> = {
+  ArrowLeft: { x: -1, y: 0 },
+  ArrowRight: { x: 1, y: 0 },
+  ArrowUp: { x: 0, y: -1 },
+  ArrowDown: { x: 0, y: 1 },
+}
 
 const ZOOM_SPEED = 0.01
 // Mouse wheels report ~100px per notch, trackpad pinch only a few px; clamp so one notch ≈ 15%.
@@ -43,12 +53,13 @@ export async function deleteSelection(nodeIds: string[], edgeIds: string[]): Pro
     const parts = [edges ? `及其 ${edges} 条连线` : '', activeTasks ? `，并取消 ${activeTasks} 个进行中的任务` : '']
     const ok = await confirm({
       title: nodes > 1 ? `删除 ${nodes} 个节点？` : '删除该节点？',
-      description: `将删除所选节点${parts.join('')}。此操作无法撤销。`,
+      description: `将删除所选节点${parts.join('')}。可用 ⌘/Ctrl+Z 撤销${activeTasks ? '，但已取消的任务不会恢复' : ''}。`,
       confirmLabel: '删除',
       destructive: true,
     })
     if (!ok) return false
   }
+  checkpoint()
   const s = useCanvasStore.getState()
   if (edgeIds.length) s.removeEdges(edgeIds)
   if (nodeIds.length) s.removeNodes(nodeIds)
@@ -76,6 +87,11 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void
     }
 
     let pan: { id: number; sx: number; sy: number; vx: number; vy: number; moved: boolean } | null = null
+    let box: { id: number; start: Vec2; base: string[] } | null = null
+    const local = (e: PointerEvent): Vec2 => {
+      const r = el.getBoundingClientRect()
+      return { x: e.clientX - r.left, y: e.clientY - r.top }
+    }
 
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target instanceof Element ? e.target : null
@@ -83,6 +99,14 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void
       const isMiddle = e.button === 1
       const isSpacePan = e.button === 0 && spaceDown
       const isBlankPan = e.button === 0 && !onNode
+      // Shift + drag on blank canvas = box select (adds to the current selection).
+      if (isBlankPan && e.shiftKey && !spaceDown) {
+        e.preventDefault()
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+        box = { id: e.pointerId, start: local(e), base: store.getState().ui.selection.nodeIds }
+        el.setPointerCapture(e.pointerId)
+        return
+      }
       if (!isMiddle && !isSpacePan && !isBlankPan) return
       e.preventDefault()
       // Blur inputs so Delete/Space shortcuts work after clicking the canvas.
@@ -94,6 +118,20 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void
     }
 
     const onPointerMove = (e: PointerEvent) => {
+      if (box && e.pointerId === box.id) {
+        const r = rectFromPoints(box.start, local(e))
+        setMarquee(r)
+        const vp = store.getState().doc.viewport
+        const tl = screenToWorld({ x: r.x, y: r.y }, vp)
+        const hits = nodesInRect(Object.values(store.getState().doc.nodes), {
+          x: tl.x,
+          y: tl.y,
+          w: r.w / vp.zoom,
+          h: r.h / vp.zoom,
+        })
+        store.getState().select({ nodeIds: [...new Set([...box.base, ...hits])] })
+        return
+      }
       if (!pan || e.pointerId !== pan.id) return
       const dx = e.clientX - pan.sx
       const dy = e.clientY - pan.sy
@@ -104,6 +142,12 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void
     }
 
     const endPan = (e: PointerEvent) => {
+      if (box && e.pointerId === box.id) {
+        box = null
+        setMarquee(null)
+        if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId)
+        return
+      }
       if (!pan || e.pointerId !== pan.id) return
       if (pan.moved) persistence.scheduleSave()
       else if (e.type === 'pointerup' && e.button === 0 && !spaceDown) store.getState().clearSelection()
@@ -120,6 +164,48 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>): void
           spaceDown = true
           if (!pan) el.style.cursor = 'grab'
         }
+        return
+      }
+      if (isConfirmOpen()) return
+      const mod = e.metaKey || e.ctrlKey
+      const key = e.key.toLowerCase()
+      if (mod && key === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+        return
+      }
+      if (mod && key === 'y') {
+        e.preventDefault()
+        redo()
+        return
+      }
+      if (mod && key === 'a') {
+        e.preventDefault()
+        selectAll()
+        return
+      }
+      if (mod && key === 'c') {
+        if (copySelection()) e.preventDefault()
+        return
+      }
+      if (mod && key === 'v') {
+        if (pasteClipboard().length) e.preventDefault()
+        return
+      }
+      if (mod && key === 'd') {
+        e.preventDefault()
+        duplicateSelection()
+        return
+      }
+      if (e.key === 'Escape') {
+        store.getState().clearSelection()
+        return
+      }
+      const arrow = ARROWS[e.key]
+      if (arrow) {
+        const step = e.shiftKey ? 10 : 1
+        if (nudgeSelection(arrow.x * step, arrow.y * step)) e.preventDefault()
         return
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {

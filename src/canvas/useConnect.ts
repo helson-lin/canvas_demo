@@ -5,6 +5,7 @@ import { persistence } from '@/persistence/persist'
 import { useCanvasStore } from '@/store/canvasStore'
 import { toast } from '@/ui/toast'
 import { screenToWorld, worldToScreen } from './coords'
+import { checkpoint } from '@/store/history'
 
 export interface ConnectPreview {
   sourceId: string
@@ -95,6 +96,7 @@ export function startConnect(e: ReactPointerEvent<Element>, sourceId: string): v
       toast('无法连接', { kind: 'error', description: res.reason })
       return
     }
+    checkpoint()
     if (store.addEdge(sourceId, targetId)) void persistence.saveNow()
   }
 

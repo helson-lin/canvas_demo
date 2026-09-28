@@ -41,7 +41,8 @@ src/
 8. 刷新后不得存在永久 `queued`/`running` 的任务（恢复或转 `interrupted`）。
 9. 同一生成节点有 `queued/running` 任务时不得再次提交，且要有提示。
 10. 失败必须可控（`#fail` 提示词、DevPanel 开关），**禁止使用随机数决定成败**。
-11. 修改 `CanvasDocument` 结构必须递增 `SCHEMA_VERSION` 并在 `src/domain/migrations.ts` 添加迁移与测试。
+11. **用户发起的**节点/连线修改前必须调用 `checkpoint()`（`@/store/history`，连续输入/微移用同一 key 合并）；任务系统的写入（提交、成功、失败）不记录历史，撤销也不会回滚任务、资产或结果节点。
+12. 修改 `CanvasDocument` 结构必须递增 `SCHEMA_VERSION` 并在 `src/domain/migrations.ts` 添加迁移与测试。
 
 ## 4. 共享契约文件（只有 reviewer 可改）
 `src/domain/types.ts`、`src/domain/taskApi.ts`、`src/domain/selectors.ts`、`src/store/canvasStore.ts`、`src/persistence/api.ts`、`src/App.tsx`、`package.json`、配置文件（vite/tsconfig/oxlint/components.json）。

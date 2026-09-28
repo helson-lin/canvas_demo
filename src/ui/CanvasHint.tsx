@@ -25,6 +25,15 @@ const GESTURES: { keys: ReactNode; label: string }[] = [
     label: '缩放',
   },
   { keys: <Key>拖动圆点</Key>, label: '连线' },
+  {
+    keys: (
+      <>
+        <Key>Shift</Key>+<Key>拖动</Key>
+      </>
+    ),
+    label: '框选',
+  },
+  { keys: <Key>⌘/Ctrl+Z</Key>, label: '撤销' },
   { keys: <Key>Delete</Key>, label: '删除' },
 ]
 
