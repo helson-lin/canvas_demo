@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
   server: { port: Number(process.env.PORT) || 5173 },
   test: {
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'],
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
   },
