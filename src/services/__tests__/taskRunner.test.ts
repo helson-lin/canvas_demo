@@ -114,6 +114,18 @@ describe('taskRunner', () => {
     off()
   })
 
+  it('cancel records a reason, and a cancelled task can be retried to success', async () => {
+    const { genId } = setup({ prompt: 'a cat' })
+    const taskId = (await startGeneration(genId))!
+    await cancelTask(taskId)
+    expect(task(taskId).status).toBe('cancelled')
+    expect(task(taskId).error).toEqual({ code: 'CANCELLED', message: '已取消' })
+    const retryId = (await retryTask(taskId))!
+    await vi.advanceTimersByTimeAsync(4000)
+    expect(task(retryId).status).toBe('succeeded')
+    expect(task(retryId).resultNodeId).toBe(task(taskId).resultNodeId)
+  })
+
   it('blocks duplicate submit while active', async () => {
     const { genId } = setup({ prompt: 'x' })
     await startGeneration(genId)

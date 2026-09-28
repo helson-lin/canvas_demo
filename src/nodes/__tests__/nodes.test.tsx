@@ -166,6 +166,16 @@ describe('ImageNode view states', () => {
     expect((screen.getByAltText('柴犬') as HTMLImageElement).src).toContain('/samples/result-square.svg')
   })
 
+  it('cancelled result reads as cancelled, not failed, and can be retried', () => {
+    renderImage(
+      docWith({ assetId: null, pendingTaskId: 't1' }, makeTask('t1', 'gen', 'cancelled', { error: { code: 'CANCELLED', message: '已取消' } })),
+    )
+    expect(screen.getByText('已取消')).toBeTruthy()
+    expect(screen.queryByText('生成失败')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /重试/ }))
+    expect(retryTask).toHaveBeenCalledWith('t1')
+  })
+
   it('failed renders error and retry', () => {
     renderImage(
       docWith({ assetId: null, pendingTaskId: 't1' }, makeTask('t1', 'gen', 'failed', { error: { code: 'E', message: '出错了' } })),

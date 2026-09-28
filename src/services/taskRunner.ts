@@ -354,7 +354,7 @@ export async function cancelTask(taskId: string): Promise<void> {
   if (!task || !isTaskActive(task)) return
   const t = trackers.get(taskId)
   finishTracking(taskId)
-  store().patchTask(taskId, { status: 'cancelled' })
+  store().patchTask(taskId, { status: 'cancelled', error: { code: 'CANCELLED', message: '已取消' } })
   await save()
   if (t) await deps.service.cancel(t.remoteId).catch(() => undefined)
 }

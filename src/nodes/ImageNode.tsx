@@ -1,6 +1,6 @@
 // OWNER: T2
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
-import { Check, Clock3, ImageIcon, LoaderCircle, RotateCcw, Sparkles, TriangleAlert, Upload } from 'lucide-react'
+import { Ban, Check, Clock3, ImageIcon, LoaderCircle, RotateCcw, Sparkles, TriangleAlert, Upload } from 'lucide-react'
 import { Button } from '@/components/motion/button/base'
 import { ImageGeneration, type ImageGenerationStatus } from '@/components/agents/image-generation'
 import { Loader } from '@/components/motion/loader'
@@ -102,9 +102,11 @@ function ResultImage({ task, url }: { task: Task; url: string | null }) {
   const [w, h] = task.params.aspectRatio.split(':')
   const output = MOCK_OUTPUTS[task.params.aspectRatio]
   const prompt = task.inputSnapshot.prompts.join('，')
-  const canRetry = task.status === 'failed' || task.status === 'interrupted'
-  const isError = status === 'error'
-  const testId = status === 'complete' ? 'image-result' : isError ? 'image-failed' : 'image-pending'
+  const canRetry = task.status === 'failed' || task.status === 'interrupted' || task.status === 'cancelled'
+  // A user-cancelled task is not a failure: neutral label, prompt kept on the second line.
+  const cancelled = task.status === 'cancelled'
+  const isError = status === 'error' && !cancelled
+  const testId = status === 'complete' ? 'image-result' : status === 'error' ? 'image-failed' : 'image-pending'
   const canOpen = status === 'complete' && !!url
   return (
     <div data-testid={testId} data-status={status} className="flex flex-col">
@@ -132,8 +134,8 @@ function ResultImage({ task, url }: { task: Task; url: string | null }) {
               isError ? 'text-destructive' : status === 'complete' ? 'text-foreground' : 'text-muted-foreground',
             )}
           >
-            {STATUS_ICON[status]}
-            {STATUS_TEXT[status]}
+            {cancelled ? <Ban className="size-3.5" aria-hidden /> : STATUS_ICON[status]}
+            {cancelled ? '已取消' : STATUS_TEXT[status]}
             {task.attempt > 1 && <span className="font-normal text-muted-foreground">· 第 {task.attempt} 次</span>}
           </p>
           <p className={cn('mt-0.5 truncate text-xs', isError ? 'text-destructive/90' : 'text-muted-foreground')}>

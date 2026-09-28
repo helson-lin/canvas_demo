@@ -15,7 +15,7 @@ import {
 } from '@/domain'
 import { persistence } from '@/persistence/persist'
 import { useAssetUrl } from '@/services/assetStore'
-import { retryTask, startGeneration } from '@/services/taskRunner'
+import { cancelTask, retryTask, startGeneration } from '@/services/taskRunner'
 import { useCanvasStore } from '@/store/canvasStore'
 import { NodeStatus, NodeTitle } from '@/ui/NodeStatus'
 import { toast } from '@/ui/toast'
@@ -151,9 +151,19 @@ function GeneratorNodeView({ node }: { node: GeneratorNodeModel }) {
             <div className="flex items-center gap-2">
               <NodeStatus status={task.status} />
               {task.attempt > 1 && <span className="text-[10px] text-muted-foreground">第 {task.attempt} 次</span>}
+              {active && (
+                <button
+                  type="button"
+                  data-no-drag
+                  onClick={() => void cancelTask(task.id)}
+                  className="ml-auto rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  取消任务
+                </button>
+              )}
             </div>
-            {task.error && <p className="text-xs text-destructive">{task.error.message}</p>}
-            {(task.status === 'failed' || task.status === 'interrupted') && (
+            {task.error && task.status !== 'cancelled' && <p className="text-xs text-destructive">{task.error.message}</p>}
+            {(task.status === 'failed' || task.status === 'interrupted' || task.status === 'cancelled') && (
               <Button data-no-drag size="sm" variant="secondary" onClick={() => retryTask(task.id)}>
                 <RotateCcw className="h-3.5 w-3.5" />
                 重试
