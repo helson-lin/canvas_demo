@@ -58,6 +58,13 @@ export function ImageNode({ node }: { node: ImageNodeModel }) {
   let body: ReactNode
   if (view === 'ready' && url) {
     body = <img src={url} alt="图片" draggable={false} className="h-full w-full rounded-lg object-contain" />
+  } else if (view === 'ready') {
+    // Blob-backed assets resolve asynchronously after a reload; don't flash the "missing" picker meanwhile.
+    body = (
+      <div className="flex h-full items-center justify-center" data-testid="image-loading">
+        <Loader variant="dots" label="加载图片" />
+      </div>
+    )
   } else if ((view === 'queued' || view === 'running') && pendingTask) {
     body = (
       <div className="flex h-full flex-col items-center justify-center gap-3" data-testid="image-pending">
