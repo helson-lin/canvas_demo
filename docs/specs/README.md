@@ -13,9 +13,9 @@ T0 foundation ✅ (已合入 main)
  ├─ T3 edges             feat/t3-edges         Claude
  ├─ T4 task-engine       feat/t4-task-engine   Claude
  ├─ T5 persistence       feat/t5-persistence   Claude
- ├─ C1 toolbar           feat/c1-toolbar       Codex
- ├─ C2 devpanel          feat/c2-devpanel      Codex
- └─ C3 status-ui         feat/c3-status-ui     Codex
+ ├─ C1 toolbar           feat/c1-toolbar       Codex ✅
+ ├─ C2 devpanel          (main)                reviewer ✅
+ └─ C3 status-ui         (main)                reviewer ✅
 C4 README + AI 记录 (功能合入后)  feat/c4-docs   Codex
 T6 集成验收 (reviewer)            feat/t6-integration
 ```
@@ -23,14 +23,14 @@ T6 集成验收 (reviewer)            feat/t6-integration
 | ID | 规格 | 执行者 | 依赖 |
 | --- | --- | --- | --- |
 | T0 | [T0](T0-foundation.md) | reviewer | — ✅ |
-| T1 | [T1](T1-canvas-viewport.md) | Claude | T0 |
-| T2 | [T2](T2-node-ui.md) | Claude | T0 |
-| T3 | [T3](T3-edges.md) | Claude | T0 |
-| T4 | [T4](T4-task-engine.md) | Claude | T0 |
-| T5 | [T5](T5-persistence.md) | Claude | T0 |
-| C1 | [C1](C1-toolbar.md) | Codex | T0 |
-| C2 | [C2](C2-devpanel.md) | Codex | T0 |
-| C3 | [C3](C3-status-ui.md) | Codex | T0 |
+| T1 ✅ | [T1](T1-canvas-viewport.md) | Claude | T0 |
+| T2 ✅ | [T2](T2-node-ui.md) | Claude | T0 |
+| T3 ✅ | [T3](T3-edges.md) | Claude | T0 |
+| T4 ✅ | [T4](T4-task-engine.md) | Claude | T0 |
+| T5 ✅ | [T5](T5-persistence.md) | Claude | T0 |
+| C1 ✅ | [C1](C1-toolbar.md) | Codex | T0 |
+| C2 ✅ | [C2](C2-devpanel.md) | reviewer | T0 |
+| C3 ✅ | [C3](C3-status-ui.md) | reviewer | T0 |
 | C4 | [C4](C4-docs.md) | Codex | 全部 |
 | T6 | [T6](T6-integration.md) | reviewer | 全部 |
 

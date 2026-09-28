@@ -21,16 +21,16 @@ export function NodeFrame({ node, selected, title, children, handles }: NodeFram
       data-node-id={node.id}
       {...dragHandlers}
       className={cn(
-        'absolute flex touch-none flex-col rounded-xl border bg-card text-card-foreground shadow-sm',
+        'absolute isolate flex touch-none flex-col rounded-xl border bg-card text-card-foreground shadow-sm',
         selected && 'ring-2 ring-primary',
       )}
-      style={{ left: node.position.x, top: node.position.y, width: node.size.w, minHeight: node.size.h }}
+      style={{ left: node.position.x, top: node.position.y, width: node.size.w, height: node.size.h, zIndex: selected ? 1 : 0 }}
     >
       <div className="flex cursor-move items-center justify-between border-b px-3 py-2 text-xs font-medium">
         {title}
         <span className="font-mono text-[10px] text-muted-foreground">{node.id.slice(-6)}</span>
       </div>
-      <div className="flex-1 p-3">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-3">{children}</div>
       {handles ?? (
         <>
           <Handle node={node} side="in" />

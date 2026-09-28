@@ -44,21 +44,23 @@ describe('Toolbar', () => {
     expect(persistence.saveNow).toHaveBeenCalledTimes(1)
   })
 
-  it('offsets consecutive nodes by 24 screen pixels and resets after viewport changes', () => {
+  it('places consecutive nodes without overlap, the first centred in the viewport', () => {
     store().setViewport({ x: 103, y: 50, zoom: 2 })
     render(<Toolbar />)
     const add = () => fireEvent.click(screen.getByRole('button', { name: '新建图片节点' }))
-
     add()
     add()
-    let nodes = Object.values(store().doc.nodes)
-    expect(nodes[1].position.x - nodes[0].position.x).toBe(12)
-    expect(nodes[1].position.y - nodes[0].position.y).toBe(12)
-
-    store().setViewport({ x: 125, y: 50, zoom: 2 })
     add()
-    nodes = Object.values(store().doc.nodes)
-    expect(nodes[2].position).toEqual({ x: 187.5 - DEFAULT_NODE_SIZE.image.w / 2, y: 175 - DEFAULT_NODE_SIZE.image.h / 2 })
+    const nodes = Object.values(store().doc.nodes)
+    const { w, h } = DEFAULT_NODE_SIZE.image
+    expect(nodes[0].position).toEqual({ x: (500 - 103) / 2 - w / 2, y: (400 - 50) / 2 - h / 2 })
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i].position
+        const b = nodes[j].position
+        expect(Math.abs(a.x - b.x) >= w || Math.abs(a.y - b.y) >= h).toBe(true)
+      }
+    }
     expect(persistence.saveNow).toHaveBeenCalledTimes(3)
   })
 

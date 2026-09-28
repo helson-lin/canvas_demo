@@ -3,34 +3,24 @@ import { ImagePlus, LayoutTemplate, Type, Workflow } from 'lucide-react'
 import { screenToWorld } from '@/canvas/coords'
 import { Dock, DockItem, DockSeparator } from '@/components/motion/dock'
 import { Tooltip } from '@/components/motion/tooltip'
-import { DEFAULT_NODE_SIZE, newId, SAMPLE_IMAGES, type NodeType, type Vec2, type Viewport } from '@/domain'
+import { DEFAULT_NODE_SIZE, findFreePosition, newId, SAMPLE_IMAGES, type NodeType, type Vec2, type Viewport } from '@/domain'
 import { persistence } from '@/persistence/persist'
 import { useCanvasStore } from '@/store/canvasStore'
 import { toast } from '@/ui/toast'
-
-let lastViewport: Viewport | null = null
-let creationCount = 0
 
 function viewportCenter(viewport: Viewport): Vec2 {
   return screenToWorld({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, viewport)
 }
 
-function nextNodePosition(type: NodeType, viewport: Viewport): Vec2 {
-  if (
-    !lastViewport ||
-    lastViewport.x !== viewport.x ||
-    lastViewport.y !== viewport.y ||
-    lastViewport.zoom !== viewport.zoom
-  ) {
-    creationCount = 0
-    lastViewport = { ...viewport }
-  }
-
-  const offset = (creationCount * 24) / viewport.zoom
-  creationCount += 1
-  const center = viewportCenter(viewport)
+/** Centred in the viewport, then nudged diagonally until it doesn't overlap an existing node. */
+function nextNodePosition(type: NodeType): Vec2 {
+  const { doc } = useCanvasStore.getState()
+  const center = viewportCenter(doc.viewport)
   const size = DEFAULT_NODE_SIZE[type]
-  return { x: center.x - size.w / 2 + offset, y: center.y - size.h / 2 + offset }
+  return findFreePosition(Object.values(doc.nodes), { x: center.x - size.w / 2, y: center.y - size.h / 2 }, size, {
+    x: 24,
+    y: 24,
+  })
 }
 
 function saveDocument(): void {
@@ -39,7 +29,7 @@ function saveDocument(): void {
 
 function createNode(type: NodeType): void {
   const store = useCanvasStore.getState()
-  const id = store.addNode(type, nextNodePosition(type, store.doc.viewport))
+  const id = store.addNode(type, nextNodePosition(type))
   store.select({ nodeIds: [id] })
   saveDocument()
 }
