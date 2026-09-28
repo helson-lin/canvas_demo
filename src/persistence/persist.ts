@@ -4,7 +4,6 @@ import type { PersistenceAdapter, SaveStatus } from './api'
 import { readBlob, readDoc, removeBlob, writeBlob, writeDoc } from './db'
 import { createEmptyDocument, findDanglingEdges, migrate, UnsupportedVersionError, type CanvasDocument } from '@/domain'
 import { useCanvasStore } from '@/store/canvasStore'
-import { resumeTasks } from '@/services/taskRunner'
 import { toast } from '@/ui/toast'
 
 export const SAVE_DEBOUNCE_MS = 300
@@ -134,6 +133,8 @@ async function boot(): Promise<void> {
   teardown = attachListeners()
   savingEnabled = canSave
   try {
+    // Dynamic import: taskRunner imports this module, a static import would form a TDZ cycle.
+    const { resumeTasks } = await import('@/services/taskRunner')
     await resumeTasks()
   } catch (err) {
     toast('恢复任务失败', { kind: 'error', description: err instanceof Error ? err.message : String(err) })
